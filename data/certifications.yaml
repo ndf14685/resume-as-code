@@ -1,0 +1,16 @@
+# =============================================================================
+# CERTIFICATIONS  --  SINGLE SOURCE OF TRUTH (FACTS)
+# -----------------------------------------------------------------------------
+# No certifications were provided. Nothing is invented. Add real entries below
+# using the documented shape; until then this section is omitted from generated
+# CVs. See PENDING FACTUAL VALIDATION in the README.
+#
+# Example shape (do NOT fill with placeholder data):
+#   - name: <certification name>
+#     issuer: <issuing organization>
+#     issued: "YYYY-MM"
+#     expires: "YYYY-MM"   # or null
+#     credential_id: null  # omit if not public
+# =============================================================================
+
+certifications: []

@@ -1,0 +1,283 @@
+# =============================================================================
+# CANONICAL PROFESSIONAL EXPERIENCE  --  SINGLE SOURCE OF TRUTH (FACTS)
+# -----------------------------------------------------------------------------
+# These are FACTS. Presentation layers may select experiences, order them, and
+# choose which bullets to show -- they may NOT alter company, title, dates,
+# engagement type, or the skills list. Overlapping engagements are represented
+# faithfully and are NOT hidden: a contractor / part-time engagement can and
+# does coexist with a formal full-time role. Dates are kept at the real
+# granularity given; unknown months are recorded as year-only rather than
+# invented.
+#
+# Fields:
+#   engagement: full_time | contract | freelance | part_time | consulting | null
+#     (null = not yet confirmed; see PENDING FACTUAL VALIDATION in README)
+#   start/end : "YYYY-MM", "YYYY" (month unknown), or "present"
+#   approximate_start: true when the start is an approximation (e.g. "~2018")
+#   skills    : MUST all exist in data/skills.yaml
+#   bullets[].tags : emphasis tags used by profile/job tailoring for selection
+# =============================================================================
+
+experiences:
+  - id: itau
+    company: Banco Itaú
+    title: DevOps / DevSecOps Engineer
+    engagement: contract
+    start: "2026-02"
+    end: present
+    skills: [AWS, GitLab CI, Secure SDLC, Release Automation, Incident Response]
+    bullets:
+      - text: >-
+          Deliver cloud infrastructure and CI/CD automation for a banking
+          environment, building and maintaining GitLab CI pipelines on AWS.
+        tags: [cloud, cicd, automation]
+      - text: >-
+          Apply DevSecOps practices across delivery pipelines, integrating
+          security controls and troubleshooting production incidents.
+        tags: [devsecops, security, incident]
+      - text: >-
+          Automate infrastructure and deployment workflows to improve delivery
+          reliability and reduce manual operations.
+        tags: [automation, sre, reliability]
+
+  - id: pichincha
+    company: Banco Pichincha
+    title: DevOps / DevSecOps Consultant
+    engagement: contract
+    start: "2024-12"
+    end: "2026-01"
+    note: >-
+      Independent contractor engagement, held concurrently with the formal
+      full-time DevSecOps role at Allianz Argentina. Allianz was the principal
+      formal position; Pichincha was a parallel consulting engagement.
+    skills: [Secure SDLC, Release Automation]
+    bullets:
+      - text: >-
+          Provided DevOps / DevSecOps consulting as an independent contractor,
+          held concurrently with a formal full-time role at Allianz Argentina.
+        tags: [devsecops, cloud, consulting]
+      - text: >-
+          Advised on CI/CD and secure delivery practices for cloud
+          infrastructure.
+        tags: [cicd, security, cloud]
+
+  - id: allianz
+    company: Allianz Argentina
+    title: DevSecOps Engineer
+    engagement: full_time
+    start: "2024-07"
+    end: "2025-05"
+    note: >-
+      Principal formal employment during this period. Overlaps with the
+      Banco Pichincha contractor engagement above, which was a parallel
+      consulting engagement.
+    skills:
+      [Secure SDLC, Jenkins, SAST, SonarQube, GitHub Advanced Security, SCA,
+       AWS, Amazon EKS, Kubernetes, Terraform, OAuth2 / API Security,
+       Security Architecture, Cloud Security, Kubernetes Security, AI Governance,
+       Platform Engineering]
+    bullets:
+      - text: >-
+          Owned the Secure SDLC across engineering teams, embedding SAST
+          (SonarQube) and GitHub Advanced Security into CI/CD pipelines.
+        tags: [devsecops, security, cicd]
+      - text: >-
+          Built and secured AWS/EKS Kubernetes platforms with Terraform,
+          applying security architecture and OAuth2 / API security controls.
+        tags: [cloud, kubernetes, iac, security, api]
+      - text: >-
+          Operated Jenkins-based delivery pipelines with integrated security
+          gates (SAST/SCA).
+        tags: [cicd, security, devsecops]
+      - text: >-
+          Assessed risks and controls for corporate generative-AI adoption,
+          contributing to AI governance practices.
+        tags: [ai, security, governance]
+      - text: >-
+          Delivered security enablement and training to development teams.
+        tags: [security, leadership]
+
+  - id: arkho
+    company: ARKHO
+    title: Cloud Engineer
+    engagement: contract
+    location: Chile (Remote)
+    start: "2024-02"
+    end: "2024-07"
+    skills:
+      [AWS, Amazon CloudFront, Amazon S3, Amazon RDS, Node.js, Amazon EKS,
+       AWS CDK, AWS CodeBuild, AWS CodePipeline, AWS CodeCommit, Docker,
+       Distributed Systems]
+    bullets:
+      - text: >-
+          Engineered AWS cloud infrastructure (CloudFront, S3, RDS) for Node.js
+          microservices deployed on Amazon EKS.
+        tags: [cloud, backend, kubernetes]
+      - text: >-
+          Defined infrastructure as code with AWS CDK and automated delivery
+          with CodeBuild, CodePipeline and CodeCommit.
+        tags: [iac, cicd, automation]
+      - text: >-
+          Containerized services with Docker for reproducible deployments.
+        tags: [containers, backend]
+
+  - id: agea
+    company: AGEA / Clarín
+    title: Data Engineer / DevOps
+    engagement: null
+    start: "2022-10"
+    end: "2024-03"
+    skills:
+      [GCP, Elastic Cloud, Google Pub/Sub, Google Dataflow, Apache Airflow, AWS,
+       Terraform, Docker, Jenkins, Java, Amazon EKS, AWS CDK, Node.js]
+    bullets:
+      - text: >-
+          Built data-engineering pipelines on GCP using Pub/Sub, Dataflow and
+          Airflow, with Elastic Cloud for search and analytics.
+        tags: [data, cloud]
+      - text: >-
+          Provisioned multi-cloud infrastructure (GCP, AWS) with Terraform and
+          delivered services through Jenkins CI/CD.
+        tags: [cloud, iac, cicd]
+      - text: >-
+          Deployed containerized Java and Node.js workloads on Amazon EKS,
+          defining infrastructure with AWS CDK.
+        tags: [containers, kubernetes, backend, iac]
+
+  - id: ingenia
+    company: INGENIA
+    title: Technology Architect / SRE / DevSecOps
+    engagement: null
+    start: "2022-04"
+    end: "2022-09"
+    skills:
+      [AWS, Kubernetes, Terraform, Apache Airflow, GitLab CI, Azure, Azure AKS,
+       Azure DevOps, Bitbucket, SRE Practices, Security Architecture,
+       Platform Engineering]
+    bullets:
+      - text: >-
+          Acted as technology/platform architect across client engagements,
+          designing cloud platform architecture.
+        tags: [architecture, platform]
+      - text: >-
+          Geopagos: built AWS Kubernetes platforms with Terraform, Airflow and
+          GitLab CI.
+        tags: [cloud, kubernetes, iac, cicd]
+      - text: >-
+          Mercantil Andina: delivered Azure/AKS platforms with Terraform,
+          Azure DevOps and Bitbucket.
+        tags: [cloud, kubernetes, iac, cicd]
+
+  - id: fluxit
+    company: Flux IT / La Nación
+    title: DevOps Engineer
+    engagement: null
+    start: "2021-07"
+    end: "2022-04"
+    skills: [GCP, AWS, Azure, Docker, Jenkins, Azure DevOps, SonarQube, BrowserStack]
+    bullets:
+      - text: >-
+          Delivered multi-cloud DevOps (GCP, AWS, Azure) with Docker-based
+          CI/CD via Jenkins and Azure DevOps.
+        tags: [cloud, cicd, containers]
+      - text: >-
+          Integrated code quality (SonarQube) and cross-browser testing
+          (BrowserStack) into delivery pipelines.
+        tags: [cicd, quality]
+
+  - id: equifax
+    company: Equifax
+    title: SRE / DevOps
+    engagement: null
+    start: "2020-02"
+    end: "2021-06"
+    skills:
+      [GCP, AWS, Docker, Ansible, Linux, Apache Tomcat, Nagios,
+       Secrets Management, IBM WebSphere, Bash, Python, Jenkins, Terraform,
+       Kubernetes, Observability, Distributed Systems]
+    bullets:
+      - text: >-
+          Operated production systems as an SRE across GCP and AWS, automating
+          configuration with Ansible and Bash/Python.
+        tags: [sre, cloud, automation, reliability]
+      - text: >-
+          Ran Kubernetes and Docker workloads, application servers (Tomcat,
+          WebSphere) and monitoring with Nagios.
+        tags: [kubernetes, containers, observability]
+      - text: >-
+          Administered privileged access and secrets with CyberArk and
+          provisioned infrastructure with Terraform.
+        tags: [security, iac]
+
+  - id: telecom_lead
+    company: Telecom
+    title: Technical Lead / Configuration Manager / SOA
+    engagement: full_time
+    start: "2018"
+    approximate_start: true
+    end: "2020-02"
+    note: >-
+      Principal formal position. A separate, part-time out-of-hours consulting
+      engagement at Telecom (see 'Technical Consultant / Production Support')
+      ran later and is represented as a distinct entry -- this was NOT a single
+      continuous full-time job.
+    skills: [SOA, Oracle Service Bus, IBM DataPower, Linux, Java, Bash, Jenkins, Release Automation]
+    bullets:
+      - text: >-
+          Technical lead and configuration manager for SOA integration
+          platforms (Oracle Service Bus, IBM DataPower).
+        tags: [integration, leadership, architecture]
+      - text: >-
+          Automated Java integration releases with Jenkins on Linux and acted
+          as technical reference for the team.
+        tags: [cicd, backend, leadership, automation]
+
+  - id: telecom_support
+    company: Telecom
+    title: Technical Consultant / Production Support
+    engagement: part_time
+    start: "2020-02"
+    end: "2022-12"
+    note: >-
+      Part-time, out-of-hours freelance engagement, held concurrently with
+      roles at Equifax, La Nación and INGENIA. Explains the overlap in this
+      period. This is distinct from the earlier full-time Telecom lead role.
+    skills: [SOA, Oracle Service Bus, IBM DataPower, Production Support, Incident Response, Java, Bash]
+    bullets:
+      - text: >-
+          Provided part-time, out-of-hours production support and
+          troubleshooting for SOA integration platforms.
+        tags: [integration, incident, support]
+
+  - id: hsbc
+    company: Banco HSBC
+    title: Java / SOA Consultant
+    engagement: null
+    start: "2017-10"
+    end: "2018-06"
+    skills: [Java, SOA, Oracle Service Bus]
+    bullets:
+      - text: Java / SOA integration consultant for banking systems.
+        tags: [backend, integration]
+
+  - id: credicoop
+    company: Banco Credicoop
+    title: Java Developer / Architecture
+    engagement: null
+    start: "2014-10"
+    end: "2017-09"
+    skills: [Java, SOA]
+    bullets:
+      - text: Java developer contributing to application architecture for banking systems.
+        tags: [backend, architecture]
+
+  - id: telefonica
+    company: Telefónica / Movistar
+    title: Java / SOA Consultant
+    engagement: null
+    start: "2013-08"
+    end: "2014-10"
+    skills: [Java, SOA, Oracle Service Bus]
+    bullets:
+      - text: Java / SOA integration consultant for telecom systems.
+        tags: [backend, integration]

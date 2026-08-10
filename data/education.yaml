@@ -1,0 +1,17 @@
+# =============================================================================
+# EDUCATION  --  SINGLE SOURCE OF TRUTH (FACTS)
+# -----------------------------------------------------------------------------
+# No education records were provided. Nothing is invented. Add real entries
+# below using the documented shape; until then this section is omitted from
+# generated CVs. See PENDING FACTUAL VALIDATION in the README.
+#
+# Example shape (do NOT fill with placeholder data):
+#   - institution: <name>
+#     credential: <degree / program>
+#     field: <field of study>
+#     start: "YYYY"
+#     end: "YYYY"          # or "present"
+#     status: completed    # completed | in_progress | incomplete
+# =============================================================================
+
+education: []

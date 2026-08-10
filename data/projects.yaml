@@ -1,0 +1,40 @@
+# =============================================================================
+# FEATURED / INDEPENDENT PROJECTS  --  SINGLE SOURCE OF TRUTH (FACTS)
+# -----------------------------------------------------------------------------
+# Projects are NOT employment and are never presented as such. They appear
+# under a clearly labelled "Featured Project" heading. Skills used here provide
+# real evidence (equal to employment evidence) for tailoring, and MUST exist in
+# data/skills.yaml.
+# =============================================================================
+
+projects:
+  - id: nexusos
+    name: NexusOS
+    label: Featured Project — Independent Architecture Project
+    tagline: Governance platform for autonomous AI agents and systems
+    skills:
+      [AI Governance, Agentic Systems, Multi-Agent Systems, Policy Enforcement,
+       Capability-based Authorization, LLM Provider Routing,
+       Prompt Injection Mitigation, Auditability, Human-in-the-loop,
+       Security Architecture, Distributed Systems]
+    bullets:
+      - text: >-
+          Designed a governance pipeline that mediates autonomous agent
+          execution end to end: LLM → Identity → Authorization → Policy → Risk
+          → Verification → Execution → Audit.
+        tags: [ai, governance, security, architecture]
+      - text: >-
+          Built capability-based authorization and a policy engine so agents
+          can only invoke explicitly granted capabilities, with deterministic,
+          auditable execution.
+        tags: [ai, security, governance]
+      - text: >-
+          Implemented an AI provider fabric for multi-provider/model routing,
+          with a capability registry, verification and audit engines for
+          observability and traceability.
+        tags: [ai, platform, observability]
+      - text: >-
+          Applied prompt-injection mitigation and human-in-the-loop controls
+          for secure agent execution across desktop, voice and messaging
+          runtimes.
+        tags: [ai, security, governance]

@@ -1,0 +1,189 @@
+# =============================================================================
+# CANONICAL SKILLS CATALOG  --  SINGLE SOURCE OF TRUTH
+# -----------------------------------------------------------------------------
+# This file is the authoritative inventory of skills the candidate has REAL
+# evidence for. Every skill referenced by an experience or project MUST exist
+# here (the loader enforces this). Presentation layers (profiles / job
+# tailoring) may only SELECT and ORDER these skills -- they can never introduce
+# a skill that is not listed here. This is a core anti-hallucination control.
+#
+# `aliases` are lowercase surface forms used to detect the skill inside a Job
+# Description during tailoring. They do not change what is claimed.
+# =============================================================================
+
+categories:
+  - id: cloud
+    name: Cloud Platforms
+    skills:
+      - name: AWS
+        aliases: [aws, amazon web services]
+      - name: GCP
+        aliases: [gcp, google cloud, google cloud platform]
+      - name: Azure
+        aliases: [azure, microsoft azure]
+
+  - id: containers
+    name: Containers & Orchestration
+    skills:
+      - name: Kubernetes
+        aliases: [kubernetes, k8s]
+      - name: Amazon EKS
+        aliases: [eks, amazon eks, elastic kubernetes service]
+      - name: Azure AKS
+        aliases: [aks, azure aks, azure kubernetes service]
+      - name: Docker
+        aliases: [docker, containers, containerization]
+
+  - id: iac
+    name: Infrastructure as Code
+    skills:
+      - name: Terraform
+        aliases: [terraform, iac, infrastructure as code]
+      - name: AWS CDK
+        aliases: [cdk, aws cdk, cloud development kit]
+      - name: Ansible
+        aliases: [ansible]
+
+  - id: cicd
+    name: CI/CD & Automation
+    skills:
+      - name: Jenkins
+        aliases: [jenkins]
+      - name: GitLab CI
+        aliases: [gitlab ci, gitlab, gitlab-ci, gitlab pipelines]
+      - name: Azure DevOps
+        aliases: [azure devops, azure pipelines]
+      - name: AWS CodePipeline
+        aliases: [codepipeline, aws codepipeline]
+      - name: AWS CodeBuild
+        aliases: [codebuild, aws codebuild]
+      - name: AWS CodeCommit
+        aliases: [codecommit, aws codecommit]
+      - name: Bitbucket
+        aliases: [bitbucket, bitbucket pipelines]
+
+  - id: devsecops
+    name: DevSecOps & Application Security
+    skills:
+      - name: Secure SDLC
+        aliases: [secure sdlc, sdlc, secure software development]
+      - name: SAST
+        aliases: [sast, static analysis, static application security testing]
+      - name: SCA
+        aliases: [sca, software composition analysis, dependency scanning]
+      - name: SonarQube
+        aliases: [sonarqube, sonar]
+      - name: GitHub Advanced Security
+        aliases: [github advanced security, ghas, code scanning]
+      - name: OAuth2 / API Security
+        aliases: [oauth2, oauth, api security, openid connect, oidc]
+      - name: Security Architecture
+        aliases: [security architecture, threat modeling]
+      - name: Cloud Security
+        aliases: [cloud security, iam, identity and access management]
+      - name: Kubernetes Security
+        aliases: [kubernetes security, container security]
+      - name: Secrets Management
+        aliases: [secrets management, cyberark, privileged access, pam, vault]
+
+  - id: aws_services
+    name: AWS Services
+    skills:
+      - name: Amazon S3
+        aliases: [s3, amazon s3]
+      - name: Amazon RDS
+        aliases: [rds, amazon rds, relational database service]
+      - name: Amazon CloudFront
+        aliases: [cloudfront, amazon cloudfront, cdn]
+
+  - id: data
+    name: Data Engineering
+    skills:
+      - name: Google Pub/Sub
+        aliases: [pub/sub, pubsub, google pub/sub]
+      - name: Google Dataflow
+        aliases: [dataflow, google dataflow]
+      - name: Apache Airflow
+        aliases: [airflow, apache airflow]
+      - name: Elastic Cloud
+        aliases: [elastic cloud, elasticsearch, elastic]
+
+  - id: languages
+    name: Programming & Scripting
+    skills:
+      - name: Java
+        aliases: [java, jvm]
+      - name: Python
+        aliases: [python]
+      - name: Node.js
+        aliases: [node.js, node, nodejs]
+      - name: Bash
+        aliases: [bash, shell scripting, shell]
+
+  - id: integration
+    name: Integration & Middleware
+    skills:
+      - name: SOA
+        aliases: [soa, service oriented architecture]
+      - name: Oracle Service Bus
+        aliases: [oracle service bus, osb]
+      - name: IBM DataPower
+        aliases: [datapower, ibm datapower]
+      - name: IBM WebSphere
+        aliases: [websphere, ibm websphere]
+      - name: Apache Tomcat
+        aliases: [tomcat, apache tomcat]
+
+  - id: reliability
+    name: Observability & Reliability
+    skills:
+      - name: SRE Practices
+        aliases: [sre, site reliability engineering, reliability]
+      - name: Incident Response
+        aliases: [incident response, on-call, incident management, troubleshooting]
+      - name: Production Support
+        aliases: [production support, l3 support, operations]
+      - name: Observability
+        aliases: [observability, monitoring, alerting, distributed tracing, tracing]
+      - name: Nagios
+        aliases: [nagios]
+
+  - id: platform
+    name: Platform & Architecture
+    skills:
+      - name: Platform Engineering
+        aliases: [platform engineering, internal developer platform, idp]
+      - name: Distributed Systems
+        aliases: [distributed systems, system design, microservices]
+      - name: Release Automation
+        aliases: [release automation, release management, configuration management]
+      - name: Linux
+        aliases: [linux, unix]
+
+  - id: quality
+    name: Quality & Testing
+    skills:
+      - name: BrowserStack
+        aliases: [browserstack]
+
+  - id: ai
+    name: AI Systems & Governance
+    skills:
+      - name: AI Governance
+        aliases: [ai governance, ai risk, responsible ai, ai controls]
+      - name: Agentic Systems
+        aliases: [agentic systems, ai agents, autonomous agents, agentic platforms]
+      - name: Multi-Agent Systems
+        aliases: [multi-agent systems, multi agent, agent orchestration]
+      - name: Policy Enforcement
+        aliases: [policy enforcement, policy engine, opa, guardrails]
+      - name: Capability-based Authorization
+        aliases: [capability-based authorization, capability security, authorization]
+      - name: LLM Provider Routing
+        aliases: [provider routing, model routing, llm routing, ai provider fabric]
+      - name: Prompt Injection Mitigation
+        aliases: [prompt injection, prompt injection mitigation, llm security]
+      - name: Auditability
+        aliases: [auditability, audit trail, audit engine]
+      - name: Human-in-the-loop
+        aliases: [human-in-the-loop, hitl, human oversight]

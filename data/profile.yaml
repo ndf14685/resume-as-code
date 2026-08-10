@@ -1,0 +1,31 @@
+# =============================================================================
+# PUBLIC CONTACT / BASICS  --  SINGLE SOURCE OF TRUTH (public-safe)
+# -----------------------------------------------------------------------------
+# This file is committed to a potentially PUBLIC repository. It therefore
+# contains ONLY professional identity information the candidate already uses
+# publicly. It contains NO private PII (no date of birth, national ID, home
+# address, private phone, bank details, or client-confidential data).
+#
+# EMAIL is intentionally NOT stored here. It is resolved at generation time
+# from (in order):
+#   1. the RESUME_EMAIL environment variable, or
+#   2. data/contact.local.yaml  (git-ignored, never committed)
+# If neither is present, the CV is generated without an email line and a
+# warning is printed. This keeps the address out of the public repo while
+# still producing a complete, usable CV in local/release builds.
+# =============================================================================
+
+name: Néstor David Fleitas
+location: Argentina (Remote)
+
+# Default headline; each profile (profiles/*.yaml) overrides this per target.
+headline: Senior DevOps / Platform Engineer
+tagline: Cloud · SRE · DevSecOps · Backend · AI Infrastructure
+
+links:
+  website: nestorfleitas.ar
+  github: github.com/ndf14685
+  linkedin: linkedin.com/in/ndf14685
+
+# Email is NOT committed. See header. Leave as null here.
+email: null
