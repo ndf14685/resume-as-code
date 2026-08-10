@@ -1,0 +1,31 @@
+Ecomflow — Backend / Infrastructure Reliability Engineer (Remote)
+
+About the role
+We run the systems that keep e-commerce operations flowing: order processing,
+inventory synchronization, shipment tracking ingestion, webhooks, and invoice
+processing. You will own the reliability and correctness of these backend
+systems end to end.
+
+Responsibilities
+- Design and operate reliable backend services and data pipelines for order
+  processing, inventory synchronization and tracking ingestion.
+- Build resilient integrations: webhooks, retry handling, error recovery,
+  rate limiting, queue resilience and idempotency.
+- Improve observability with OpenTelemetry, Grafana Cloud and Sentry:
+  distributed tracing, metrics, alerting and incident response.
+- Own database performance and schema evolution.
+- Ship changes safely through CI/CD.
+
+Stack
+- Cloudflare Workers for edge/serverless compute.
+- Drizzle ORM and PlanetScale for the data layer.
+- GCP for supporting infrastructure.
+- OpenTelemetry + Grafana Cloud + Sentry for observability.
+
+What we look for
+- Strong background in backend engineering and distributed systems / system
+  design.
+- Production troubleshooting and incident response experience.
+- A track record of building for reliability: retries, idempotency, rate
+  limiting, error recovery.
+- Comfort with CI/CD and infrastructure automation.

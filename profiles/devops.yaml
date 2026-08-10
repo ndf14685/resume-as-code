@@ -1,0 +1,36 @@
+# PRESENTATION PROFILE — DevOps / Platform Engineer
+# Presentation only. Selects and orders canonical facts; invents nothing.
+name: devops
+headline: Senior DevOps / Platform Engineer
+tagline: Cloud · SRE · DevSecOps · Backend · AI Infrastructure
+
+summary: >-
+  Senior DevOps / Platform Engineer with 10+ years building and operating
+  reliable cloud infrastructure across AWS, GCP and Azure. Deep hands-on
+  experience with Kubernetes, Terraform and CI/CD (GitLab CI, Jenkins, Azure
+  DevOps), backed by a strong backend and enterprise-integration background in
+  Java and distributed systems. Works fluently across SRE, DevSecOps and
+  platform engineering — from production incident response to secure, automated
+  delivery.
+
+# Ordered skill categories to display; skills within each are ordered by how
+# much real evidence supports them. Only skills with evidence are ever shown.
+skill_priority:
+  - cloud
+  - containers
+  - iac
+  - cicd
+  - reliability
+  - platform
+  - devsecops
+  - languages
+  - data
+
+# Tags used to score and select bullets for detailed roles.
+emphasis_tags:
+  [cloud, iac, kubernetes, cicd, sre, reliability, automation, platform,
+   backend, incident, containers]
+
+max_bullets: 3
+condense_before: "2019-01"   # roles ending before this become a one-line entry
+include_projects: []

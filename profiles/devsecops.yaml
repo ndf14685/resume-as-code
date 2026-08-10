@@ -1,0 +1,32 @@
+# PRESENTATION PROFILE — DevSecOps / Security Engineering
+# Presentation only. Selects and orders canonical facts; invents nothing.
+name: devsecops
+headline: Senior DevSecOps Engineer
+tagline: Secure SDLC · Cloud Security · CI/CD Security · SRE
+
+summary: >-
+  Senior DevSecOps Engineer with 10+ years across cloud infrastructure and
+  secure software delivery. Hands-on with Secure SDLC, SAST/SCA (SonarQube,
+  GitHub Advanced Security), OAuth2 / API security and security architecture on
+  AWS and EKS Kubernetes platforms. Combines a DevOps/SRE foundation
+  (Terraform, CI/CD, incident response, secrets management) with a strong
+  backend and enterprise-integration background, plus practical experience
+  assessing risks and controls for corporate generative-AI adoption.
+
+skill_priority:
+  - devsecops
+  - cloud
+  - containers
+  - cicd
+  - iac
+  - reliability
+  - languages
+  - platform
+
+emphasis_tags:
+  [devsecops, security, api, cicd, cloud, kubernetes, iac, sre, incident,
+   governance, ai]
+
+max_bullets: 3
+condense_before: "2019-01"
+include_projects: []

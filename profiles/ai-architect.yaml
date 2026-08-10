@@ -1,0 +1,36 @@
+# PRESENTATION PROFILE — AI Systems Architect
+# Presentation only. NexusOS is featured as an independent architecture project,
+# never as employment. Selects and orders canonical facts; invents nothing.
+name: ai-architect
+headline: AI Systems Architect
+tagline: Agentic Platforms | AI Governance | Multi-Agent Systems
+
+summary: >-
+  AI Systems Architect focused on governance for agentic and multi-agent
+  systems. Designs capability-based authorization, policy enforcement,
+  verification and audit for autonomous AI, grounded in 10+ years of cloud
+  infrastructure, DevSecOps and distributed-systems engineering. Creator of
+  NexusOS, a governance platform that mediates agent execution end to end —
+  identity, authorization, policy, risk, verification, execution and audit —
+  with practical experience assessing risks and controls for corporate
+  generative-AI adoption.
+
+skill_priority:
+  - ai
+  - devsecops
+  - cloud
+  - containers
+  - platform
+  - iac
+  - cicd
+  - reliability
+  - languages
+
+emphasis_tags:
+  [ai, governance, security, architecture, platform, cloud, devsecops,
+   observability, backend]
+
+max_bullets: 3
+condense_before: "2019-01"
+# Feature NexusOS prominently for this target.
+include_projects: [nexusos]
