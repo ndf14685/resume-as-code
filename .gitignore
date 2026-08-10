@@ -1,0 +1,21 @@
+# --- Privacy: never commit resolved PII or generated artifacts -------------
+# The generated CVs embed the resolved email; keep them out of the public repo.
+/generated/*
+!/generated/.gitkeep
+
+# Local contact override (email) — never committed.
+/data/contact.local.yaml
+
+# --- Python ----------------------------------------------------------------
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# --- Editors / OS ----------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
