@@ -22,11 +22,13 @@ class ProfileSelection:
     is_default: bool
 
 
-def score_profiles(matched_skills: set[str], profiles_dir: str | Path) -> dict[str, int]:
+def score_profiles(matched_categories: set[str], profiles_dir: str | Path) -> dict[str, int]:
+    """Score each profile by overlap between its skill_priority (category ids)
+    and matched_categories (category ids), stem -> overlap count."""
     scores: dict[str, int] = {}
     for path in sorted(Path(profiles_dir).glob("*.yaml")):
         profile = load_profile(path)
-        scores[path.stem] = len(set(profile.skill_priority) & set(matched_skills))
+        scores[path.stem] = len(set(profile.skill_priority) & set(matched_categories))
     return scores
 
 
@@ -48,7 +50,12 @@ def select_profile(
 ) -> ProfileSelection:
     bundle = load_bundle(data_dir)
     analysis = analyze_job(bundle, jd_text)
-    scores = score_profiles(analysis.matched_skills, profiles_dir)
+    matched_categories = {
+        cat
+        for skill in analysis.matched_skills
+        if (cat := bundle.skills.category_of(skill)) is not None
+    }
+    scores = score_profiles(matched_categories, profiles_dir)
     name, is_default = pick_profile(scores, default=default)
     return ProfileSelection(
         name=name,

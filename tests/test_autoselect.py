@@ -7,7 +7,7 @@ DATA = Path(__file__).resolve().parent.parent / "data"
 
 
 def test_score_profiles_counts_overlap_against_real_profiles():
-    # tokens present in devops.yaml's skill_priority (containers, iac, data)
+    # category ids present in devops.yaml's skill_priority (containers, iac, data)
     scores = score_profiles({"containers", "iac", "data"}, PROFILES)
     assert set(scores) == {"ai-architect", "devops", "devsecops"}
     assert scores["devops"] >= 1
@@ -29,12 +29,14 @@ def test_pick_profile_all_zero_uses_default():
     assert (name, is_default) == ("ai-architect", True)
 
 
-def test_select_profile_end_to_end_devops_jd():
+def test_select_profile_end_to_end_discriminates_on_infra_jd():
     jd = (
-        "We are hiring a DevOps / Platform Engineer. Must have Kubernetes, "
-        "Terraform, CI/CD pipelines, observability, and infrastructure as code."
+        "Senior DevOps / Platform Engineer. Must have Kubernetes, Docker, "
+        "Terraform, Ansible, CI/CD pipelines (GitLab CI), AWS, and strong "
+        "observability / reliability practices."
     )
     sel = select_profile(jd, DATA, PROFILES)
     assert sel.name in {"ai-architect", "devops", "devsecops"}
     assert sel.path.exists()
-    assert isinstance(sel.scores, dict) and sel.scores
+    assert sel.score > 0            # matched categories overlapped a profile
+    assert sel.is_default is False  # a real profile was chosen, not the fallback
