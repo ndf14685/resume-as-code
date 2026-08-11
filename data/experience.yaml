@@ -124,7 +124,7 @@ experiences:
   - id: agea
     company: AGEA / Clarín
     title: Data Engineer / DevOps
-    engagement: null
+    engagement: full_time
     start: "2022-10"
     end: "2024-03"
     skills:
@@ -249,22 +249,28 @@ experiences:
         tags: [integration, incident, support]
 
   - id: hsbc
-    company: Banco HSBC
+    company: Banco HSBC (via Tata Consultancy Services)
     title: Java / SOA Consultant
-    engagement: null
+    engagement: full_time
     start: "2017-10"
     end: "2018-06"
+    note: >-
+      Formal full-time employment with Tata Consultancy Services; Banco HSBC was
+      the client/assignment. Not a contractor engagement.
     skills: [Java, SOA, Oracle Service Bus]
     bullets:
       - text: Java / SOA integration consultant for banking systems.
         tags: [backend, integration]
 
   - id: credicoop
-    company: Banco Credicoop
+    company: Banco Credicoop (via Wenance)
     title: Java Developer / Architecture
-    engagement: null
+    engagement: full_time
     start: "2014-10"
     end: "2017-09"
+    note: >-
+      Formal full-time employment with Wenance (Wene); Banco Credicoop was the
+      client/assignment. Not a contractor engagement.
     skills: [Java, SOA]
     bullets:
       - text: Java developer contributing to application architecture for banking systems.
@@ -273,7 +279,7 @@ experiences:
   - id: telefonica
     company: Telefónica / Movistar
     title: Java / SOA Consultant
-    engagement: null
+    engagement: full_time
     start: "2013-08"
     end: "2014-10"
     skills: [Java, SOA, Oracle Service Bus]
