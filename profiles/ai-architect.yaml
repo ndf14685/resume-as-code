@@ -30,7 +30,10 @@ emphasis_tags:
   [ai, governance, security, architecture, platform, cloud, devsecops,
    observability, backend]
 
-max_bullets: 3
-condense_before: "2019-01"
+max_bullets: 2
+full_detail_count: 6
+# Older enterprise-integration roles collapse to one-line entries for this
+# target so NexusOS and recent cloud/DevSecOps work stay prominent within 2 pages.
+condense_before: "2021-01"
 # Feature NexusOS prominently for this target.
 include_projects: [nexusos]
