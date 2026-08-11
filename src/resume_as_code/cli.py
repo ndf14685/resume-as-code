@@ -71,6 +71,10 @@ def cmd_generate(args) -> int:
 
     out_dir = Path(args.out)
     formats = [f.strip() for f in args.formats.split(",") if f.strip()]
+    if (args.validate or args.json_out) and "pdf" not in formats:
+        # ATS validation always needs a rendered PDF; force it even if
+        # --formats excluded it, without changing what --formats reports.
+        formats.append("pdf")
 
     if job_path:
         job_name = args.job_name or job_path.stem

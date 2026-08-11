@@ -34,3 +34,15 @@ def test_driver_explicit_profile_disables_auto(tmp_path):
     payload = json.loads(res.stdout)
     assert payload["profileSelected"] == "devops"
     assert payload["profileAuto"] is False
+
+def test_validate_forces_pdf_render_even_when_formats_excludes_it(tmp_path):
+    jd = tmp_path / "job.txt"
+    jd.write_text("DevOps engineer: Kubernetes, Terraform, CI/CD.")
+    out = tmp_path / "out"
+    res = _run(["generate", "--jd", str(jd), "--profile", "devops",
+                "--validate", "--json", "--out", str(out),
+                "--formats", "docx,txt", "--job-name", "Edge"])
+    assert res.returncode == 0, res.stderr
+    payload = json.loads(res.stdout)
+    assert isinstance(payload["atsPassed"], bool)          # validation ran
+    assert Path(payload["artifacts"]["pdf"]).exists()      # pdf was rendered
