@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
+from .autoselect import select_profile
 from .jobmatch import analyze_job, render_analysis_md
 from .loader import DataError, load_bundle
 from .render_docx import render_docx
@@ -46,7 +48,22 @@ def cmd_generate(args) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
-    profile_path = Path(args.profiles) / f"{args.profile}.yaml"
+    # --jd is the machine-driver alias for --job; either resolves the JD path.
+    job_path: Path | None = args.jd if args.jd else (Path(args.job) if args.job else None)
+    jd_text = job_path.read_text(encoding="utf-8") if job_path else None
+
+    profile_auto = bool(args.auto_profile)
+    if profile_auto:
+        if jd_text is None:
+            print("error: --auto-profile requires --jd/--job", file=sys.stderr)
+            return 2
+        selection = select_profile(jd_text, args.data, args.profiles)
+        profile_name = selection.name
+        profile_path = selection.path
+    else:
+        profile_name = args.profile
+        profile_path = Path(args.profiles) / f"{args.profile}.yaml"
+
     if not profile_path.exists():
         print(f"error: profile not found: {profile_path}", file=sys.stderr)
         return 2
@@ -55,10 +72,8 @@ def cmd_generate(args) -> int:
     out_dir = Path(args.out)
     formats = [f.strip() for f in args.formats.split(",") if f.strip()]
 
-    if args.job:
-        job_path = Path(args.job)
-        jd_text = job_path.read_text(encoding="utf-8")
-        job_name = job_path.stem
+    if job_path:
+        job_name = args.job_name or job_path.stem
         analysis = analyze_job(bundle, jd_text)
         resume = build_resume(
             bundle, profile,
@@ -77,18 +92,45 @@ def cmd_generate(args) -> int:
         written.append(report_path)
     else:
         resume = build_resume(bundle, profile)
-        stem = f"Nestor_Fleitas_{_slug(profile.name)}"
+        stem = f"Nestor_Fleitas_{(args.job_name.title() if args.job_name else _slug(profile.name))}"
         written = _write_outputs(resume, out_dir, stem, formats)
+
+    artifacts = {
+        "pdf": str(out_dir / f"{stem}.pdf"),
+        "docx": str(out_dir / f"{stem}.docx"),
+        "txt": str(out_dir / f"{stem}.txt"),
+    }
+    ats_passed = None
+    ats_failures: list[str] = []
+    if args.validate:
+        checks = run_ats_validation(artifacts["pdf"], args.data)
+        ats_passed = all(c.ok for c in checks)
+        ats_failures = [c.name for c in checks if not c.ok]
+
+    if args.json_out:
+        print(json.dumps({
+            "profileSelected": profile_name,
+            "profileAuto": profile_auto,
+            "atsPassed": ats_passed,
+            "atsFailures": ats_failures,
+            "artifacts": artifacts,
+        }))
+        return 0
 
     if not resume.email:
         print("warning: no email resolved (set RESUME_EMAIL or data/contact.local.yaml)",
               file=sys.stderr)
 
     print(f"Generated ({profile.name}"
-          + (f" / {args.job}" if args.job else "") + "):")
+          + (f" / {job_path}" if job_path else "") + "):")
     for p in written:
         print(f"  - {p}")
     print(f"canonical fingerprint: {resume.canonical_hash}")
+    if args.validate:
+        if ats_passed:
+            print("ATS validation: PASSED")
+        else:
+            print("ATS validation: FAILED (" + ", ".join(ats_failures) + ")", file=sys.stderr)
     return 0
 
 
@@ -132,11 +174,21 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     g = sub.add_parser("generate", help="generate a CV")
-    g.add_argument("--profile", required=True, help="profile name (see: resume profiles)")
+    profile_grp = g.add_mutually_exclusive_group(required=True)
+    profile_grp.add_argument("--profile", help="profile name (see: resume profiles)")
+    profile_grp.add_argument("--auto-profile", action="store_true",
+                              help="auto-select the profile from the JD")
     g.add_argument("--job", help="path to a Job Description text file")
+    g.add_argument("--jd", type=Path,
+                   help="path to a Job Description text file (alias for --job)")
+    g.add_argument("--job-name", help="override the output filename stem source")
     g.add_argument("--profiles", default="profiles", help="profiles directory")
     g.add_argument("--out", default="generated", help="output directory")
     g.add_argument("--formats", default="pdf,docx,txt", help="comma list: pdf,docx,txt")
+    g.add_argument("--validate", action="store_true",
+                   help="run ATS validation on the rendered PDF")
+    g.add_argument("--json", dest="json_out", action="store_true",
+                   help="emit a machine-readable JSON summary to stdout")
     g.set_defaults(func=cmd_generate)
 
     v = sub.add_parser("validate", help="run ATS validation on a generated PDF")
