@@ -23,12 +23,21 @@ class ProfileSelection:
 
 
 def score_profiles(matched_categories: set[str], profiles_dir: str | Path) -> dict[str, int]:
-    """Score each profile by overlap between its skill_priority (category ids)
-    and matched_categories (category ids), stem -> overlap count."""
+    """Score each profile by how highly it prioritises the matched categories.
+
+    A matched category contributes (N - index) where index is its position in
+    the profile's skill_priority (length N). Earlier = higher weight. This lets
+    a profile that leads with a matched category outrank one that merely lists
+    it late, so specialised profiles (e.g. devsecops) remain reachable.
+    """
     scores: dict[str, int] = {}
     for path in sorted(Path(profiles_dir).glob("*.yaml")):
         profile = load_profile(path)
-        scores[path.stem] = len(set(profile.skill_priority) & set(matched_categories))
+        priority = profile.skill_priority
+        n = len(priority)
+        scores[path.stem] = sum(
+            n - idx for idx, cat in enumerate(priority) if cat in matched_categories
+        )
     return scores
 
 

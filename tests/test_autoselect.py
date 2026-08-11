@@ -6,12 +6,19 @@ PROFILES = Path(__file__).resolve().parent.parent / "profiles"
 DATA = Path(__file__).resolve().parent.parent / "data"
 
 
-def test_score_profiles_counts_overlap_against_real_profiles():
-    # category ids present in devops.yaml's skill_priority (containers, iac, data)
+def test_score_profiles_weights_by_priority_position():
+    # "data" is unique to devops; weighting keeps devops strictly ahead here
     scores = score_profiles({"containers", "iac", "data"}, PROFILES)
     assert set(scores) == {"ai-architect", "devops", "devsecops"}
-    assert scores["devops"] >= 1
-    assert all(v >= 0 for v in scores.values())
+    assert scores["devops"] > scores["devsecops"]
+
+
+def test_devsecops_is_reachable_for_security_focused_input():
+    # a security-slanted JD hits mostly the devsecops category (+cicd);
+    # devsecops leads with devsecops, so it must win despite a shorter list
+    scores = score_profiles({"devsecops", "cicd"}, PROFILES)
+    winner = max(sorted(scores), key=lambda k: scores[k])
+    assert winner == "devsecops", scores
 
 
 def test_pick_profile_returns_highest_score():
