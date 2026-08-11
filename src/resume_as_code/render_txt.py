@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .layout import contact_line, present_sections
+from .layout import contact_line, language_line, present_sections, training_line
 from .models import ResumeModel
 
 
@@ -59,12 +59,18 @@ def render_txt(resume: ResumeModel) -> str:
                     out.append(proj.tagline)
                 for b in proj.bullets:
                     out.append(f"  - {b}")
-        elif key == "education":
-            for e in resume.education:
-                out.append(_fmt_generic(e))
         elif key == "certifications":
             for c in resume.certifications:
                 out.append(_fmt_generic(c))
+        elif key == "training":
+            for g in resume.training:
+                out.append(training_line(g))
+        elif key == "languages":
+            for item in resume.languages:
+                out.append(language_line(item))
+        elif key == "education":
+            for e in resume.education:
+                out.append(_fmt_generic(e))
         out.append("")
 
     out.append("-" * 60)

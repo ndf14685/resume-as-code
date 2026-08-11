@@ -203,6 +203,8 @@ class DataBundle(BaseModel):
     projects: list[Project] = []
     education: list[dict] = []
     certifications: list[dict] = []
+    training: list[dict] = []
+    languages: list[dict] = []
 
     def check_skill_integrity(self) -> list[str]:
         """Return a list of skill references that are not in the catalog."""
@@ -322,8 +324,10 @@ class ResumeModel(BaseModel):
     skill_groups: list[SkillGroup] = []
     experiences: list[RenderExperience] = []
     featured_projects: list[RenderProject] = []
-    education: list[dict] = []
     certifications: list[dict] = []
+    training: list[dict] = []
+    languages: list[dict] = []
+    education: list[dict] = []
     # provenance
     profile_name: str = ""
     target: Optional[str] = None

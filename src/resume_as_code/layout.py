@@ -11,8 +11,10 @@ SECTION_ORDER: list[tuple[str, str]] = [
     ("skills", "Core Skills"),
     ("experience", "Professional Experience"),
     ("projects", "Featured Project"),
-    ("education", "Education"),
     ("certifications", "Certifications"),
+    ("training", "Training & Courses"),
+    ("languages", "Languages"),
+    ("education", "Education"),
 ]
 
 
@@ -29,11 +31,30 @@ def present_sections(resume: ResumeModel) -> list[tuple[str, str]]:
         elif key == "projects" and resume.featured_projects:
             t = "Featured Projects" if len(resume.featured_projects) > 1 else title
             out.append((key, t))
-        elif key == "education" and resume.education:
-            out.append((key, title))
         elif key == "certifications" and resume.certifications:
             out.append((key, title))
+        elif key == "training" and resume.training:
+            out.append((key, title))
+        elif key == "languages" and resume.languages:
+            out.append((key, title))
+        elif key == "education" and resume.education:
+            out.append((key, title))
     return out
+
+
+def training_line(group: dict) -> str:
+    """Render one provider's training group as 'Provider: a (yr), b (yr)'."""
+    provider = group.get("provider", "")
+    parts = []
+    for item in group.get("items", []):
+        name = item.get("name", "")
+        year = item.get("year")
+        parts.append(f"{name} ({year})" if year else name)
+    return f"{provider}: " + ", ".join(parts) if provider else ", ".join(parts)
+
+
+def language_line(item: dict) -> str:
+    return f"{item.get('language', '')}: {item.get('level', '')}".strip(": ")
 
 
 def contact_line(resume: ResumeModel) -> str:

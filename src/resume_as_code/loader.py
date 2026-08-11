@@ -56,6 +56,10 @@ def load_bundle(data_dir: str | Path) -> DataBundle:
     projects_raw = _read_yaml(data_dir / "projects.yaml")
     education_raw = _read_yaml(data_dir / "education.yaml")
     certs_raw = _read_yaml(data_dir / "certifications.yaml")
+    training_path = data_dir / "training.yaml"
+    languages_path = data_dir / "languages.yaml"
+    training_raw = _read_yaml(training_path) if training_path.exists() else {}
+    languages_raw = _read_yaml(languages_path) if languages_path.exists() else {}
 
     try:
         basics = Basics(**profile)
@@ -74,6 +78,8 @@ def load_bundle(data_dir: str | Path) -> DataBundle:
         projects=projects,
         education=education_raw.get("education", []) or [],
         certifications=certs_raw.get("certifications", []) or [],
+        training=training_raw.get("training", []) or [],
+        languages=languages_raw.get("languages", []) or [],
     )
 
     integrity_errors = bundle.check_skill_integrity()

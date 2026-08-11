@@ -25,7 +25,7 @@ from reportlab.platypus import (
     Spacer,
 )
 
-from .layout import contact_line, present_sections
+from .layout import contact_line, language_line, present_sections, training_line
 from .models import ResumeModel
 
 INK = HexColor("#1A1A1A")
@@ -168,15 +168,33 @@ def render_pdf(resume: ResumeModel, out_path: str | Path) -> Path:
                     story.append(Paragraph(_escape(b), _STYLES["bullet"],
                                            bulletText="•"))
                 story.append(Spacer(1, 3))
-        elif key == "education":
-            for e in resume.education:
-                story.append(Paragraph(
-                    _escape(" · ".join(str(v) for v in e.values() if v)),
-                    _STYLES["body"]))
         elif key == "certifications":
             for cert in resume.certifications:
                 story.append(Paragraph(
                     _escape(" · ".join(str(v) for v in cert.values() if v)),
+                    _STYLES["body"]))
+        elif key == "training":
+            for g in resume.training:
+                line = training_line(g)
+                if ": " in line:
+                    prov, rest = line.split(": ", 1)
+                    line = f"<b>{_escape(prov)}:</b> {_escape(rest)}"
+                else:
+                    line = _escape(line)
+                story.append(Paragraph(line, _STYLES["skill"]))
+        elif key == "languages":
+            for item in resume.languages:
+                line = language_line(item)
+                if ": " in line:
+                    lang, rest = line.split(": ", 1)
+                    line = f"<b>{_escape(lang)}:</b> {_escape(rest)}"
+                else:
+                    line = _escape(line)
+                story.append(Paragraph(line, _STYLES["skill"]))
+        elif key == "education":
+            for e in resume.education:
+                story.append(Paragraph(
+                    _escape(" · ".join(str(v) for v in e.values() if v)),
                     _STYLES["body"]))
 
     doc.build(story)

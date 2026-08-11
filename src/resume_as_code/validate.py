@@ -23,8 +23,10 @@ SECTION_TITLES = [
     "Core Skills",
     "Professional Experience",
     "Featured Project",
-    "Education",
     "Certifications",
+    "Training & Courses",
+    "Languages",
+    "Education",
 ]
 
 
@@ -138,6 +140,16 @@ def run_ats_validation(pdf_path: str | Path, data_dir: str | Path = "data") -> l
     for e in bundle.experiences:
         for token in (e.start, e.end):
             m = YEAR_RE.search(token)
+            if m:
+                canonical_years.add(m.group(0))
+    # Training and certification years are equally canonical (real, dated facts).
+    for group in bundle.training:
+        for item in group.get("items", []):
+            if item.get("year"):
+                canonical_years.add(str(item["year"]))
+    for cert in bundle.certifications:
+        for value in cert.values():
+            m = YEAR_RE.search(str(value))
             if m:
                 canonical_years.add(m.group(0))
     found_years = set(YEAR_RE.findall(text))

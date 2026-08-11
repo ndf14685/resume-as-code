@@ -16,7 +16,7 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from docx.shared import Pt, RGBColor, Inches
 
-from .layout import contact_line, present_sections
+from .layout import contact_line, language_line, present_sections, training_line
 from .models import ResumeModel
 
 FONT = "Calibri"
@@ -155,16 +155,32 @@ def render_docx(resume: ResumeModel, out_path: str | Path) -> Path:
                     _tight(bp, before=0, after=1)
                     bp.paragraph_format.left_indent = Inches(0.22)
                     _run(bp, b, size=10)
-        elif key == "education":
-            for e in resume.education:
-                p = doc.add_paragraph()
-                _tight(p)
-                _run(p, " · ".join(str(v) for v in e.values() if v), size=10)
         elif key == "certifications":
             for c in resume.certifications:
                 p = doc.add_paragraph()
                 _tight(p)
                 _run(p, " · ".join(str(v) for v in c.values() if v), size=10)
+        elif key == "training":
+            for g in resume.training:
+                p = doc.add_paragraph()
+                _tight(p, before=0, after=1)
+                _run(p, f"{g.get('provider', '')}: ", bold=True, size=10)
+                items = []
+                for it in g.get("items", []):
+                    yr = it.get("year")
+                    items.append(f"{it.get('name','')} ({yr})" if yr else it.get("name", ""))
+                _run(p, ", ".join(items), size=10)
+        elif key == "languages":
+            for item in resume.languages:
+                p = doc.add_paragraph()
+                _tight(p, before=0, after=1)
+                _run(p, f"{item.get('language','')}: ", bold=True, size=10)
+                _run(p, item.get("level", ""), size=10)
+        elif key == "education":
+            for e in resume.education:
+                p = doc.add_paragraph()
+                _tight(p)
+                _run(p, " · ".join(str(v) for v in e.values() if v), size=10)
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
