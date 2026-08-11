@@ -1,0 +1,32 @@
+# =============================================================================
+# TRAINING / COURSES  --  SINGLE SOURCE OF TRUTH (FACTS)
+# -----------------------------------------------------------------------------
+# These are training/courses, NOT professional certifications. They are kept
+# strictly separate from data/certifications.yaml. Anything without sufficient
+# evidence to be a formal certification lives here, by design. Grouped by
+# provider; `year` is omitted when unknown (never invented).
+# =============================================================================
+
+training:
+  - provider: Cisco Networking Academy
+    items:
+      - { name: CyberOps, year: 2024 }
+  - provider: Hackademy
+    items:
+      - { name: Red Team, year: 2025 }
+      - { name: OSINT, year: 2024 }
+      - { name: DevSecOps & Cloud Security, year: 2022 }
+      - { name: Fundamentals of Hacking and Defense, year: 2022 }
+  - provider: MundoSE
+    items:
+      - { name: Data Science, year: 2023 }
+      - { name: DevOps, year: 2022 }
+  - provider: Udemy
+    items:
+      - { name: Docker }
+      - { name: Kubernetes }
+      - { name: Airflow }
+  - provider: Educación IT
+    items:
+      - { name: Linux }
+      - { name: Java }

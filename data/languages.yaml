@@ -1,0 +1,11 @@
+# =============================================================================
+# LANGUAGES  --  SINGLE SOURCE OF TRUTH (FACTS)
+# -----------------------------------------------------------------------------
+# Only confirmed languages. Nothing inferred beyond certainty.
+# =============================================================================
+
+languages:
+  - language: Spanish
+    level: Native
+  - language: English
+    level: B1–B2 / Conversational–Professional working level

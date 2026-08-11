@@ -147,7 +147,7 @@ experiences:
   - id: ingenia
     company: INGENIA
     title: Technology Architect / SRE / DevSecOps
-    engagement: null
+    engagement: full_time
     start: "2022-04"
     end: "2022-09"
     skills:
@@ -170,8 +170,8 @@ experiences:
 
   - id: fluxit
     company: Flux IT / La Nación
-    title: DevOps Engineer
-    engagement: null
+    title: DevOps Engineer / DevOps Mobile
+    engagement: full_time
     start: "2021-07"
     end: "2022-04"
     skills: [GCP, AWS, Azure, Docker, Jenkins, Azure DevOps, SonarQube, BrowserStack]
@@ -187,8 +187,8 @@ experiences:
 
   - id: equifax
     company: Equifax
-    title: SRE / DevOps
-    engagement: null
+    title: SRE / DevOps Engineer
+    engagement: full_time
     start: "2020-02"
     end: "2021-06"
     skills:
@@ -213,8 +213,7 @@ experiences:
     company: Telecom
     title: Technical Lead / Configuration Manager / SOA
     engagement: full_time
-    start: "2018"
-    approximate_start: true
+    start: "2018-03"
     end: "2020-02"
     note: >-
       Principal formal position. A separate, part-time out-of-hours consulting
