@@ -8,7 +8,11 @@ import sys
 from pathlib import Path
 
 from .autoselect import select_profile
+from .compose import compose_plan
 from .jobmatch import analyze_job, render_analysis_md
+from .score import evaluate as evaluate_quality
+from .semantic_planner import plan as semantic_plan
+from .tailor import build_from_plan
 from .loader import DataError, load_bundle
 from .render_docx import render_docx
 from .render_pdf import render_pdf
@@ -53,21 +57,10 @@ def cmd_generate(args) -> int:
     jd_text = job_path.read_text(encoding="utf-8") if job_path else None
 
     profile_auto = bool(args.auto_profile)
-    if profile_auto:
-        if jd_text is None:
-            print("error: --auto-profile requires --jd/--job", file=sys.stderr)
-            return 2
-        selection = select_profile(jd_text, args.data, args.profiles)
-        profile_name = selection.name
-        profile_path = selection.path
-    else:
-        profile_name = args.profile
-        profile_path = Path(args.profiles) / f"{args.profile}.yaml"
-
-    if not profile_path.exists():
-        print(f"error: profile not found: {profile_path}", file=sys.stderr)
-        return 2
-    profile = load_profile(profile_path)
+    # Role-driven pipeline: JD → ROLE_INTENT (hybrid: LLM proposes / deterministic
+    # authority) → role-composed positioning. Explicit --profile keeps the legacy
+    # template path for backward compatibility.
+    role_driven = profile_auto and jd_text is not None
 
     out_dir = Path(args.out)
     formats = [f.strip() for f in args.formats.split(",") if f.strip()]
@@ -76,28 +69,62 @@ def cmd_generate(args) -> int:
         # --formats excluded it, without changing what --formats reports.
         formats.append("pdf")
 
-    if job_path:
-        job_name = args.job_name or job_path.stem
+    intent = None
+    if role_driven:
+        # ask=None → deterministic authority (offline-safe default). Production can
+        # inject an OpenClaw-backed ask; unsupported LLM claims are rejected upstream.
+        result = semantic_plan(jd_text, bundle)
+        intent = result.intent
         analysis = analyze_job(bundle, jd_text)
-        resume = build_resume(
-            bundle, profile,
-            target=job_name,
+        comp = compose_plan(bundle, intent)
+        job_name = args.job_name or (job_path.stem if job_path else "Role")
+        resume = build_from_plan(
+            bundle, comp, target=job_name,
             matched_skills=analysis.matched_skills,
             extra_emphasis=analysis.extra_emphasis,
         )
+        profile_name = intent.primary_role
         stem = f"Nestor_Fleitas_{job_name.title()}"
         written = _write_outputs(resume, out_dir, stem, formats)
         report = render_analysis_md(
-            analysis, job_name=job_name, profile_name=profile.name,
+            analysis, job_name=job_name, profile_name=profile_name,
             canonical_hash=resume.canonical_hash,
         )
         report_path = out_dir / f"{job_name}-analysis.md"
         report_path.write_text(report, encoding="utf-8")
         written.append(report_path)
     else:
-        resume = build_resume(bundle, profile)
-        stem = f"Nestor_Fleitas_{(args.job_name.title() if args.job_name else _slug(profile.name))}"
-        written = _write_outputs(resume, out_dir, stem, formats)
+        if profile_auto:
+            selection = select_profile(jd_text or "", args.data, args.profiles)
+            profile_name, profile_path = selection.name, selection.path
+        else:
+            profile_name = args.profile
+            profile_path = Path(args.profiles) / f"{args.profile}.yaml"
+        if not profile_path.exists():
+            print(f"error: profile not found: {profile_path}", file=sys.stderr)
+            return 2
+        profile = load_profile(profile_path)
+        if job_path:
+            job_name = args.job_name or job_path.stem
+            analysis = analyze_job(bundle, jd_text)
+            resume = build_resume(
+                bundle, profile, target=job_name,
+                matched_skills=analysis.matched_skills,
+                extra_emphasis=analysis.extra_emphasis,
+            )
+            stem = f"Nestor_Fleitas_{job_name.title()}"
+            written = _write_outputs(resume, out_dir, stem, formats)
+            report = render_analysis_md(
+                analysis, job_name=job_name, profile_name=profile.name,
+                canonical_hash=resume.canonical_hash,
+            )
+            report_path = out_dir / f"{job_name}-analysis.md"
+            report_path.write_text(report, encoding="utf-8")
+            written.append(report_path)
+        else:
+            resume = build_resume(bundle, profile)
+            stem = f"Nestor_Fleitas_{(args.job_name.title() if args.job_name else _slug(profile.name))}"
+            written = _write_outputs(resume, out_dir, stem, formats)
 
     artifacts = {
         "pdf": str(out_dir / f"{stem}.pdf"),
@@ -106,27 +133,57 @@ def cmd_generate(args) -> int:
     }
     ats_passed = None
     ats_failures: list[str] = []
+    quality = None
     if args.validate:
-        checks = run_ats_validation(artifacts["pdf"], args.data)
-        ats_passed = all(c.ok for c in checks)
-        ats_failures = [c.name for c in checks if not c.ok]
+        if role_driven and intent is not None:
+            # Scored, fail-closed quality gate (ATS_SCORE/RECRUITER_SCORE +
+            # keyword coverage). atsPassed reflects the full gate, so the NexusOS
+            # adapter blocks delivery on any quality failure, not just parse errors.
+            quality = evaluate_quality(
+                artifacts["pdf"], jd_text=jd_text, bundle=bundle,
+                intent=intent, data_dir=args.data)
+            ats_passed = quality.passed
+            ats_failures = quality.failures
+        else:
+            checks = run_ats_validation(artifacts["pdf"], args.data)
+            ats_passed = all(c.ok for c in checks)
+            ats_failures = [c.name for c in checks if not c.ok]
 
     if args.json_out:
-        print(json.dumps({
+        payload = {
             "profileSelected": profile_name,
             "profileAuto": profile_auto,
             "atsPassed": ats_passed,
             "atsFailures": ats_failures,
             "artifacts": artifacts,
-        }))
+        }
+        if quality is not None:
+            payload.update({
+                "atsScore": quality.ats_score,
+                "recruiterScore": quality.recruiter_score,
+                "roleAlignment": quality.role_alignment,
+                "keywordCoverage": quality.must_have_coverage,
+                "unsupportedClaims": quality.unsupported_claims,
+                "qualityReport": quality.render(),
+            })
+        if intent is not None:
+            payload["roleIntent"] = {
+                "primaryRole": intent.primary_role,
+                "roleWeights": intent.role_weights,
+                "seniority": intent.seniority,
+                "source": intent.source,
+            }
+        print(json.dumps(payload))
         return 0
 
     if not resume.email:
         print("warning: no email resolved (set RESUME_EMAIL or data/contact.local.yaml)",
               file=sys.stderr)
 
-    print(f"Generated ({profile.name}"
+    print(f"Generated ({profile_name}"
           + (f" / {job_path}" if job_path else "") + "):")
+    if quality is not None:
+        print(quality.render())
     for p in written:
         print(f"  - {p}")
     print(f"canonical fingerprint: {resume.canonical_hash}")

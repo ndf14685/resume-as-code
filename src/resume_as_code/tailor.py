@@ -185,6 +185,67 @@ def build_resume(
     )
 
 
+def build_from_plan(
+    bundle: DataBundle,
+    plan,                                   # compose.ComposedPlan
+    *,
+    target: Optional[str] = None,
+    matched_skills: Optional[set[str]] = None,
+    extra_emphasis: Optional[list[str]] = None,
+) -> ResumeModel:
+    """Build a ResumeModel from a role-driven ComposedPlan. Same truth rules as
+    build_resume: every emitted skill/bullet is canonical; the plan only decides
+    positioning and how much of each real role is expanded."""
+    matched = matched_skills or set()
+    emphasis = set(plan.emphasis_tags) | set(extra_emphasis or [])
+
+    experiences: list[RenderExperience] = []
+    for exp in bundle.experiences_sorted():
+        eid = exp.id
+        condensed = (eid in plan.condense) or (eid not in plan.expand)
+        base = dict(
+            company=exp.company, title=exp.title, meta_right=exp.date_range(),
+            engagement_label=exp.engagement_label(), location=exp.location,
+        )
+        if condensed:
+            experiences.append(RenderExperience(**base, bullets=[], condensed=True))
+        else:
+            limit = plan.expand.get(eid, 2)
+            experiences.append(RenderExperience(
+                **base, bullets=_select_bullets(exp, emphasis, limit, matched),
+                condensed=False))
+
+    featured: list[RenderProject] = []
+    proj_by_id = {p.id: p for p in bundle.projects}
+    for pid in plan.include_projects:
+        p = proj_by_id.get(pid)
+        if not p:
+            continue
+        featured.append(RenderProject(
+            name=p.name, label=p.label, tagline=p.tagline,
+            bullets=_select_bullets_project(p, emphasis, 4, matched)))
+
+    return ResumeModel(
+        name=bundle.basics.name,
+        headline=plan.headline,
+        tagline=plan.tagline or None,
+        location=bundle.basics.location,
+        email=bundle.basics.email,
+        links=_format_links(bundle),
+        summary=plan.summary,
+        skill_groups=_skill_groups(bundle, plan.skill_priority, matched),
+        experiences=experiences,
+        featured_projects=featured,
+        certifications=bundle.certifications,
+        training=bundle.training,
+        languages=bundle.languages,
+        education=bundle.education,
+        profile_name=plan.profile_name,
+        target=target,
+        canonical_hash=canonical_fingerprint(bundle),
+    )
+
+
 def _select_bullets_project(project, emphasis, limit, boost) -> list[str]:
     scored = []
     for idx, bullet in enumerate(project.bullets):
