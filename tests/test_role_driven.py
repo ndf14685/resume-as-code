@@ -140,3 +140,17 @@ def test_chronology_always_has_company_title_dates(bundle):
         r = _resume_for(bundle, key)
         for e in r.experiences:
             assert e.company and e.title and e.meta_right
+
+
+def test_recruiter_subject_not_used_as_specialization(bundle):
+    """Phase 17: a recruiter subject line must not become the professional title
+    or a fake specialization ('specializing in US Global')."""
+    jd = ("AI Security Architect Opportunity - US Global Semiconductor Leader "
+          "Enterprise - 100% Remote\nHi Nestor, we have a role...")
+    ri = infer_role_intent(jd, years_experience=11)
+    assert ri.job_title == "AI Security Architect"
+    comp = compose_plan(bundle, ri)
+    for noise in ("us global", "opportunity", "semiconductor", "100%",
+                  "enterprise", "specializing in us"):
+        assert noise not in comp.headline.lower(), noise
+        assert noise not in comp.summary.lower(), noise

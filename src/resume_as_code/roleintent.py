@@ -150,17 +150,41 @@ def _normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text.lower())
 
 
+# Recruiter / company / location / employment noise: a JD subject line like
+# "AI Security Architect Opportunity - US Global Semiconductor Leader Enterprise -
+# 100% Remote" must NOT become the professional title. These tokens (and anything
+# after them) are stripped so only the ROLE survives.
+_NOISE_TOKEN = re.compile(
+    r"\b(opportunity|opportunities|position|vacancy|opening|role\s+at|hiring|urgent|"
+    r"remote|onsite|on-site|hybrid|relocation|contract|c2c|w2|full[\s-]?time|"
+    r"part[\s-]?time|permanent|enterprise|global|worldwide|leader|semiconductor|"
+    r"fortune|inc\.?|ltd\.?|llc|gmbh|corp\.?|company|client|usd|salary|100%|"
+    r"visa|h1b|eod|asap)\b", re.I)
+
+
 def _title_head(s: str) -> str:
-    """The role phrase only: strip markdown, cut at the first sentence/list
-    boundary, cap length — so a full-sentence JD line yields just the title."""
+    """The ROLE phrase only. Strips markdown, cuts at sentence/label boundaries,
+    splits recruiter-subject segments on ' - '/'|'/dashes and keeps only the
+    leading role segments (stopping at the first company/location/context noise).
+    'Software Engineer - AI' survives; 'AI Security Architect Opportunity - US
+    Global ... - 100% Remote' reduces to 'AI Security Architect'."""
     s = s.strip().strip("#*_ ").strip()
-    # cut at sentence/list boundaries and em/en dashes; keep the single hyphen
-    # so qualifiers like "Software Engineer - AI" survive.
-    s = re.split(r"[.,:;–—]", s, maxsplit=1)[0].strip().strip("*_ ").strip()
+    s = re.split(r"[.:;,]", s, maxsplit=1)[0].strip().strip("*_ ").strip()
+    segs = re.split(r"\s+[-–—|]\s+", s)
+    kept: list[str] = []
+    for seg in segs:
+        m = _NOISE_TOKEN.search(seg)
+        if m:
+            head = seg[:m.start()].strip()
+            if head and not kept:
+                kept.append(head)
+            break
+        kept.append(seg)
+    s = " - ".join(kept).strip() if kept else (segs[0] if segs else "")
     words = s.split()
     if len(words) > 7:
         s = " ".join(words[:7])
-    return s
+    return s.rstrip(" -–—|").strip()
 
 
 def _extract_title(jd_text: str) -> str:
