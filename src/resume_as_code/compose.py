@@ -28,6 +28,9 @@ FAMILY_LABEL = {
     "application_security": "Application Security Engineer",
     "cloud_security": "Cloud Security Engineer",
     "backend_engineering": "Backend Engineer",
+    "presales_sales_support": "Sales Support / Cloud Engineer",
+    "data_platforms": "Data Platform Engineer",
+    "finops": "Cloud Engineer — FinOps",
 }
 FAMILY_TAGLINE = {
     "software_engineering": ["Distributed Systems", "APIs", "Backend Engineering"],
@@ -41,6 +44,10 @@ FAMILY_TAGLINE = {
     "application_security": ["SAST/DAST", "Secure Coding", "Threat Modeling"],
     "cloud_security": ["Cloud Security", "IAM", "Kubernetes Security"],
     "backend_engineering": ["APIs", "Distributed Systems", "Java/Node"],
+    "presales_sales_support": ["Cloud Infrastructure", "POC & Demo Environments",
+                               "Technical Enablement"],
+    "data_platforms": ["Data Pipelines", "Cloud Data Platforms", "ETL"],
+    "finops": ["Cloud Cost Optimization", "Multi-Cloud", "Automation"],
 }
 FAMILY_EMPHASIS = {
     "software_engineering": ["backend", "architecture", "distributed", "data", "quality"],
@@ -54,6 +61,9 @@ FAMILY_EMPHASIS = {
     "application_security": ["security", "devsecops", "backend"],
     "cloud_security": ["security", "cloud", "devsecops"],
     "backend_engineering": ["backend", "data", "architecture", "integration"],
+    "presales_sales_support": ["cloud", "architecture", "leadership", "platform"],
+    "data_platforms": ["data", "cloud", "platform"],
+    "finops": ["cloud", "reliability", "automation"],
 }
 _ENG_NOUN = re.compile(r"engineer|developer|architect|programmer|\bsre\b|specialist", re.I)
 
@@ -130,6 +140,23 @@ def _top_evidenced_skills(bundle: DataBundle, categories: list[str], limit: int)
     return out
 
 
+_CF_PATTERNS = (
+    ("client engagements", r"client engagements?"),
+    ("technical enablement and training delivery", r"enablement and training"),
+    ("stakeholder collaboration", r"stakeholders?\b"),
+)
+
+
+def _customer_facing_evidence(bundle: DataBundle) -> str:
+    """Frases customer-facing RESPALDADAS por bullets canónicos, verbatim-based.
+    Sin evidencia → cadena vacía (la dimensión no se narra). Nunca inventa
+    presales/sales cycles: solo refleja lo que los bullets ya dicen."""
+    corpus = " ".join(
+        b.text for exp in bundle.experiences for b in exp.bullets).lower()
+    found = [phrase for phrase, pat in _CF_PATTERNS if re.search(pat, corpus)]
+    return ", ".join(found[:2])
+
+
 def compose_summary(bundle: DataBundle, intent: RoleIntent, skill_priority: list[str],
                     headline: str) -> str:
     """Evidence-grounded professional summary (<=90 words). Identity is taken
@@ -156,6 +183,13 @@ def compose_summary(bundle: DataBundle, intent: RoleIntent, skill_priority: list
              else f"{identity} across distributed systems and secure delivery."]
     if comp_str:
         parts.append(f"Core strengths: {comp_str}.")
+    # Dimensión customer-facing (sales support / presales): SOLO si la familia
+    # pesa en el intent Y existe evidencia real en los bullets canónicos
+    # (enablement/training/client engagements/arquitectura frente a clientes).
+    if intent.role_weights.get("presales_sales_support", 0) >= 0.08:
+        cf = _customer_facing_evidence(bundle)
+        if cf:
+            parts.append(f"Customer-facing track record: {cf}.")
     if ai_relevant:
         parts.append("Creator of NexusOS, a governed execution platform for "
                      "autonomous AI agents — capability-based authorization, "

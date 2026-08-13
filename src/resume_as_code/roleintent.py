@@ -118,6 +118,39 @@ ROLE_FAMILIES: dict[str, dict] = {
         "categories": {"languages": 1.0, "integration": 0.6, "data": 0.5,
                        "platform": 0.4, "reliability": 0.3},
     },
+    # Customer-facing technical roles: sales support / presales / solutions.
+    # Regression driver: "Senior Sales Support Engineer" (2026-08-13) — a JD
+    # can be semánticamente sales-support aunque su título diga Cloud/DevOps.
+    "presales_sales_support": {
+        "titles": [r"sales support engineer", r"pre-?sales", r"sales engineer",
+                   r"solutions? (?:engineer|consultant|architect)",
+                   r"customer engineer", r"technical account"],
+        "keywords": {"poc": 3, "pocs": 3, "proof of concept": 3,
+                     "proof of concepts": 3, "demo": 2, "demos": 2,
+                     "product demos": 3, "workshop": 3, "workshops": 3,
+                     "customer-facing": 3, "customer facing": 3,
+                     "sales enablement": 3, "technical sales": 3,
+                     "sales support": 3, "sales executives": 2,
+                     "solution engineers": 2, "solution architects": 1,
+                     "stakeholder": 1, "sales cycle": 2, "evaluation": 1},
+        "categories": {"cloud": 0.7, "platform": 0.6, "containers": 0.4,
+                       "reliability": 0.4, "cicd": 0.3},
+    },
+    "data_platforms": {
+        "titles": [r"data engineer", r"data platform"],
+        "keywords": {"snowflake": 2, "databricks": 2, "kafka": 2, "spark": 2,
+                     "airflow": 2, "informatica": 2, "glue": 1, "etl": 2,
+                     "data pipeline": 2, "data pipelines": 2, "data platform": 3,
+                     "data platforms": 3, "warehouse": 1, "big data": 2},
+        "categories": {"data": 1.0, "cloud": 0.4, "languages": 0.3},
+    },
+    "finops": {
+        "titles": [r"finops"],
+        "keywords": {"finops": 3, "cost optimization": 2, "cost management": 2,
+                     "cloud cost": 2, "cloud costs": 2, "billing": 1,
+                     "cost-effective": 1},
+        "categories": {"cloud": 1.0, "reliability": 0.3},
+    },
 }
 
 ALLOWED_FAMILIES = frozenset(ROLE_FAMILIES)

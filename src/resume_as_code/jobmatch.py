@@ -106,6 +106,37 @@ EXTERNAL_TERMS: dict[str, dict] = {
         "transferable_to": ["Distributed Systems", "SRE Practices"],
         "note": "reliability engineering",
     },
+    # Data-platform tooling (regression: Sales Support JD 2026-08-13). Nada de
+    # esto se reclama como experiencia directa: o es transferable con evidencia
+    # canónica real, o es GAP explícito.
+    "snowflake": {
+        "transferable_to": ["Google Dataflow", "Apache Airflow"],
+        "note": "cloud data platform (operated GCP data pipelines; NOT claimed)",
+    },
+    "databricks": {
+        "transferable_to": ["Google Dataflow", "Apache Airflow"],
+        "note": "managed data/ML platform (data pipeline operations; NOT claimed)",
+    },
+    "informatica": {
+        "transferable_to": ["Apache Airflow"],
+        "note": "ETL orchestration (Airflow-based pipelines; NOT claimed)",
+    },
+    "kafka": {
+        "transferable_to": ["Google Pub/Sub"],
+        "note": "event streaming / messaging (operated Google Pub/Sub)",
+    },
+    "spark": {
+        "transferable_to": ["Google Dataflow"],
+        "note": "distributed data processing (operated Google Dataflow)",
+    },
+    "aws glue": {
+        "transferable_to": ["Apache Airflow", "AWS"],
+        "note": "managed ETL (Airflow orchestration on cloud; NOT claimed)",
+    },
+    "finops": {
+        "transferable_to": [],
+        "note": "cloud cost management practice — sin evidencia canónica: GAP",
+    },
 }
 
 # JD concept -> emphasis tags to bias bullet selection toward.

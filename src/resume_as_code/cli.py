@@ -45,6 +45,23 @@ def _write_outputs(resume, out_dir: Path, stem: str, formats: list[str]) -> list
     return written
 
 
+def _build_ask(ask_cmd: str):
+    """ask(prompt)->str vía subproceso: prompt por stdin, respuesta por stdout.
+    Desacopla el proveedor (OpenClaw, ai.ask del bridge, un stub de test).
+    Cualquier fallo/timeout lo maneja el planner con fallback determinista."""
+    import subprocess
+
+    def ask(prompt: str) -> str:
+        proc = subprocess.run(
+            ask_cmd, shell=True, input=prompt, capture_output=True,
+            text=True, timeout=90)
+        if proc.returncode != 0:
+            raise RuntimeError(f"ask-cmd exit {proc.returncode}: {proc.stderr[:200]}")
+        return proc.stdout
+
+    return ask
+
+
 def cmd_generate(args) -> int:
     try:
         bundle = load_bundle(args.data)
@@ -70,10 +87,14 @@ def cmd_generate(args) -> int:
         formats.append("pdf")
 
     intent = None
+    plan_result = None
     if role_driven:
-        # ask=None → deterministic authority (offline-safe default). Production can
-        # inject an OpenClaw-backed ask; unsupported LLM claims are rejected upstream.
-        result = semantic_plan(jd_text, bundle)
+        # ask=None → deterministic authority (offline-safe default). --ask-cmd
+        # inyecta el planner semántico (producción: OpenClaw/ai.ask); claims sin
+        # evidencia se rechazan aguas arriba y cualquier fallo cae al determinista.
+        ask_fn = _build_ask(args.ask_cmd) if getattr(args, "ask_cmd", None) else None
+        plan_result = semantic_plan(jd_text, bundle, ask=ask_fn)
+        result = plan_result
         intent = result.intent
         analysis = analyze_job(bundle, jd_text)
         comp = compose_plan(bundle, intent)
@@ -173,6 +194,9 @@ def cmd_generate(args) -> int:
                 "seniority": intent.seniority,
                 "source": intent.source,
             }
+        if plan_result is not None:
+            payload["plannerAudit"] = plan_result.audit(
+                jd_text=jd_text or "", bundle=bundle)
         print(json.dumps(payload))
         return 0
 
@@ -243,6 +267,9 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--jd", type=Path,
                    help="path to a Job Description text file (alias for --job)")
     g.add_argument("--job-name", help="override the output filename stem source")
+    g.add_argument("--ask-cmd", default=None,
+                   help="shell command for the semantic planner: prompt on "
+                        "stdin, LLM answer on stdout (production: OpenClaw)")
     g.add_argument("--profiles", default="profiles", help="profiles directory")
     g.add_argument("--out", default="generated", help="output directory")
     g.add_argument("--formats", default="pdf,docx,txt", help="comma list: pdf,docx,txt")

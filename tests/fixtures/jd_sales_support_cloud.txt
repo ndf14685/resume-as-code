@@ -1,0 +1,34 @@
+**Cloud Engineer/ DevOps**
+We are looking for a Senior Sales Support Engineer with a deep background in cloud infrastructure management, automation, scripting and SRE practices to join our team in Bangalore.
+You will partner closely with Solution Engineers, Product Specialists and Solution Architects to provision, maintain and optimize robust infrastructure for high-stakes Proof of Concepts (POCs), Workshops and global Product Demos.
+Beyond infrastructure management, you will drive automation—creating efficient deployments, optimizing cloud spend (FinOps) and utilizing GenAI tools to maximize team productivity.
+This is a high-impact role where your expertise in Cloud infrastructure, DevOps and Data engineering will directly contribute to accelerating sales cycles and help close strategic deals by ensuring our technical demonstrations are reliable, secure and impressive.
+You will report to the Manager, Sales Support Engineering.
+**Key Responsibilities**
+**Platform Management & Automation:**
+Deploy and maintain high availability Demo, POC and workshop environments across multi-cloud platforms and on-premises environments
+Develop automation frameworks using Terraform, Ansible and CI/CD pipelines to reduce manual provisioning time
+High Availability & Monitoring:
+Partner with Cloud & Product Operations teams to ensure peak performance and high availability of Informatica Intelligent Data Management Cloud (IDMC) services across AWS, Azure and GCP
+Establish and maintain SLAs for demo environment availability and performance
+Observability & FinOps:
+Monitor cloud resources using tools like Prometheus, AWS CloudWatch and pro-actively resolve infrastructure issues using ITIL Incident Management best practices
+Implement FinOps strategies to optimize cloud costs
+Security & DevSecOps:
+Automate deployments using modern secure CI/CD pipelines
+Implement security best practices including vulnerability remediation, patch management and access controls
+Collaboration & Support:
+Excellent communication skills with the ability to explain complex technical concepts to both technical and non-technical stakeholders (Solution Architects  & Sales Executives)
+Create and maintain technical documentation, runbooks and knowledge base articles
+Be part of the global development, operations and support team
+**​**
+**Required Experience and Skills**
+Experience: 6 to 10 years of experience in Cloud Infrastructure Engineering, DevOps, Data Engineering—ideally supporting technical sales, presales or customer-facing environments
+Education: B.Tech / B.E or equivalent technical degree
+Cloud & IaC Expertise: Deep hands-on experience with at least two major cloud platforms (AWS, Azure, GCP) and Infrastructure as Code (Terraform, Ansible)
+Containerization & CI/CD: Proficient with Docker, Kubernetes and setting up secure CI/CD automation pipelines
+Scripting & OS: Strong scripting skills (Python and Shell) alongside advanced administration of Linux (RedHat/Ubuntu) and Windows environments
+Data & AI Tools: Familiarity with modern Data platforms (Snowflake, Databricks, Relational DBs), Data Engineering tools (Kafka, Spark, Airflow, Glue) and exposure to AI productivity tools (Claude Code, Cursor, Gemini, LLMs) to optimize daily workflows.
+**Preferred (Bonus) Qualifications**
+Knowledge of Informatica products (IDMC cloud services or traditional on-premises solutions like PowerCenter, IDQ or MDM)
+Relevant Cloud and AI certifications

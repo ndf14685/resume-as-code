@@ -134,6 +134,9 @@ def plan(
     intent = validate_intent_schema(proposal, years_experience=years_experience)
     if intent is None:                       # schema violation → reject, fallback
         return PlanResult(intent=det, fallback_used=True, provider="deterministic")
+    if not intent.job_title:
+        # el LLM re-pondera familias; el título del JD lo ancla el determinista
+        intent.job_title = det.job_title
 
     # Evidence-validate every proposed semantic match; drop unsupported ones.
     authority = EvidenceAuthority(bundle)
