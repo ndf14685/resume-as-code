@@ -127,3 +127,58 @@ def test_generated_resume_never_claims_forbidden_skills(tmp_path):
         assert claim not in text, claim
     # Ansible y Airflow tienen evidencia canónica: reclamarlas es legítimo
     assert "Ansible" in text and "Airflow" in text
+
+
+# ── regresión msg 8275: JD corta/en español no debe cratear ROLE_ALIGNMENT ──
+JD_SPANISH_AGENTS = """DevOps / SRE — Agentes IA
+Buscamos DevOps / SRE con experiencia en CI/CD y manejo de workloads sobre Kubernetes, con conocimiento de agent skills y comportamiento general de sistemas de IA.
+Requisitos
+Sólido entendimiento de procesos CI/CD
+Gestión de workloads en Kubernetes
+Conocimiento de agent skills y comportamientos de IA
+Inglés avanzado fluido
+Modalidad: contractor, USD · full remoto · Argentina"""
+
+
+def test_role_alignment_not_cratered_by_language_mismatch():
+    """Tags del LLM en español ("comportamiento de sistemas de IA") no pueden
+    aparecer verbatim en un CV en inglés. La alineación debe medir también la
+    fidelidad por FAMILIAS del intent (idioma-neutral), no solo frases exactas.
+    Un CV compuesto DESDE el intent devops/sre/ai no puede alinear 0.4."""
+    from resume_as_code.render_txt import render_txt
+    from resume_as_code.roleintent import RoleIntent
+    from resume_as_code.score import _role_alignment
+    from resume_as_code.tailor import build_from_plan
+
+    bundle = load_bundle(DATA)
+    intent = RoleIntent(
+        job_title="DevOps / SRE — Agentes IA", primary_role="devops",
+        role_weights={"devops": 0.45, "sre": 0.3, "ai_systems": 0.15,
+                      "platform_engineering": 0.1},
+        category_weights={"cicd": 1.0, "cloud": 0.9, "containers": 0.8,
+                          "reliability": 0.6, "ai": 0.4},
+        seniority="senior",
+        reasoning_tags=["CI/CD", "Kubernetes workloads", "agent skills",
+                        "comportamiento de sistemas de IA"],
+        source="llm+validated")
+    comp = compose_plan(bundle, intent)
+    resume = build_from_plan(bundle, comp, target="AgentesIA",
+                             matched_skills=[], extra_emphasis=[])
+    alignment = _role_alignment(render_txt(resume), intent)
+    assert alignment >= 0.7, alignment
+
+
+def test_role_alignment_still_low_for_true_mismatch():
+    """La corrección NO relaja el gate: un CV que no expresa las familias del
+    intent sigue alineando bajo."""
+    from resume_as_code.roleintent import RoleIntent
+    from resume_as_code.score import _role_alignment
+
+    intent = RoleIntent(
+        job_title="iOS Developer", primary_role="software_engineering",
+        role_weights={"software_engineering": 1.0},
+        category_weights={"languages": 1.0},
+        reasoning_tags=["swift", "swiftui", "ios sdk", "app store"],
+        source="deterministic")
+    cv = "Marketing specialist. Social media campaigns. Brand strategy."
+    assert _role_alignment(cv, intent) < 0.3

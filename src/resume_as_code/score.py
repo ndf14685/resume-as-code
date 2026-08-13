@@ -177,14 +177,35 @@ def evaluate(pdf_path: str | Path, *, jd_text: str, bundle: DataBundle,
 
 
 def _role_alignment(cv_text: str, intent: RoleIntent) -> float:
-    """Fraction of the intent's top reasoning tags surfaced in the CV."""
+    """Fidelidad del CV al ROLE_INTENT: máx(tags, familias).
+
+    Los reasoning_tags son frases del JD (pueden venir en otro idioma o como
+    frases compuestas que jamás aparecen verbatim en un CV en inglés — msg
+    8275: "comportamiento de sistemas de IA" ⇒ alignment 0.4 artificial). La
+    señal por FAMILIAS es idioma-neutral: qué fracción ponderada de las
+    familias del intent tiene sus keywords canónicas (inglés) expresadas en el
+    CV. Un CV realmente desalineado sigue puntuando bajo en ambas señales.
+    """
+    low = cv_text.lower()
+
+    def _hit(term: str) -> bool:
+        return re.search(rf"(?<![\w]){re.escape(term.lower())}(?![\w])",
+                         low) is not None
+
     tags = intent.reasoning_tags or list(
         ROLE_FAMILIES[intent.primary_role]["keywords"])[:6]
-    if not tags:
-        return 1.0
-    low = cv_text.lower()
-    hit = sum(1 for t in tags if re.search(rf"(?<![\w]){re.escape(t.lower())}(?![\w])", low))
-    return round(hit / len(tags), 4)
+    tag_score = (sum(1 for t in tags if _hit(t)) / len(tags)) if tags else 1.0
+
+    weights = intent.role_weights or {intent.primary_role: 1.0}
+    total = sum(weights.values()) or 1.0
+    fam_score = 0.0
+    for fam, w in weights.items():
+        spec = ROLE_FAMILIES.get(fam)
+        if spec is None:
+            continue
+        if any(_hit(kw) for kw in spec["keywords"]):
+            fam_score += w / total
+    return round(max(tag_score, fam_score), 4)
 
 
 def _density_score(cv_text: str) -> float:
