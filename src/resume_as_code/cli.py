@@ -88,6 +88,7 @@ def cmd_generate(args) -> int:
 
     intent = None
     plan_result = None
+    analysis = None
     if role_driven:
         # ask=None → deterministic authority (offline-safe default). --ask-cmd
         # inyecta el planner semántico (producción: OpenClaw/ai.ask); claims sin
@@ -187,6 +188,16 @@ def cmd_generate(args) -> int:
                 "unsupportedClaims": quality.unsupported_claims,
                 "qualityReport": quality.render(),
             })
+        if analysis is not None:
+            # El gap analysis ya se calcula para el reporte .md; exponerlo en el
+            # JSON evita que un consumidor tenga que parsear markdown o importar
+            # internals de este paquete para saber que le falta al candidato.
+            payload["jobMatch"] = {
+                "covered": list(analysis.covered),
+                "transferable": list(analysis.transferable),
+                "gaps": list(analysis.gaps),
+                "matchedSkills": list(analysis.matched_skills),
+            }
         if intent is not None:
             payload["roleIntent"] = {
                 "primaryRole": intent.primary_role,
