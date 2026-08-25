@@ -270,15 +270,13 @@ experiences:
       documentation, never a property of the data).
       CV label for the role, in Spanish: "Desarrollo SOA / Area Tecnica -
       Configuration Manager - Referente Tecnico".
-      CONFLICT (unresolved, do NOT merge silently): the CV presents Telecom as
-      ONE continuous engagement 03/2018-12/2022. The canonical record splits it
-      into this formal full-time position and a later part-time out-of-hours
-      engagement (see 'Technical Consultant / Production Support'), whose note
-      states the part-time work overlapped roles at Equifax, La Nacion and
-      INGENIA. Both representations share the same span endpoints (2018-03 and
-      2022-12). The split is kept because collapsing it would erase a
-      documented part-time/full-time distinction and the concurrency it
-      explains. See docs/data-reconciliation/CV_CANONICAL_RECONCILIATION.md.
+      SHAPE CONFIRMED by the candidate on 2026-08-25: Telecom is TWO distinct
+      engagements, not one continuous block. This formal full-time position ran
+      2018-03 to 2020-02; a separate part-time out-of-hours engagement (see
+      'Technical Consultant / Production Support') ran 2020-02 to 2022-12 and
+      overlapped roles at Equifax, La Nacion and INGENIA. The CV renders the
+      pair as a single 03/2018-12/2022 span; the split is the canonical truth
+      and must not be collapsed.
     skills: [SOA, Oracle Service Bus, IBM DataPower, Linux, Java, Bash, Jenkins, Release Automation]
     bullets:
       - text: >-
@@ -303,8 +301,8 @@ experiences:
       period. This is distinct from the earlier full-time Telecom lead role.
       End date 2022-12 is EXACT and confirmed against the candidate's CV on
       2026-08-25; it is the closing endpoint of the 03/2018-12/2022 Telecom
-      span the CV shows as a single block. See the CONFLICT note on
-      'telecom_lead'.
+      span the CV shows as a single block. The two-block shape was confirmed by
+      the candidate on 2026-08-25 — see the note on 'telecom_lead'.
     skills: [SOA, Oracle Service Bus, IBM DataPower, Production Support, Incident Response, Java, Bash]
     bullets:
       - text: >-

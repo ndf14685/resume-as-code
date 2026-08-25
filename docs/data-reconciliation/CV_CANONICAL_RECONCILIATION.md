@@ -36,7 +36,7 @@ when it is a faithful translation/derivation of something they stated, and
 | README claim "Telecom start is approximate (`~2018`)" | n/a | stale documentation asserting an approximation that the data never had | struck through and corrected in `README.md` | `CORRECTED` | the data itself | high |
 | `telecom_lead` — role label | `Desarrollo SOA / Área Técnica - Configuration Manager - Referente Técnico` | `Technical Lead / Configuration Manager / SOA` | unchanged; the Spanish CV label is recorded in the entry's `note` | `UNCHANGED` | faithful translation; "Referente Técnico" is already stated in a canonical bullet ("acted as technical reference for the team") | medium |
 | `telecom_support` — end | `12/2022` | `2022-12` | `2022-12` (unchanged) | `CONFIRMED` | candidate's CV | high |
-| **Telecom — shape of the engagement** | ONE continuous block, `03/2018 – 12/2022` | TWO records: `telecom_lead` full-time `2018-03 → 2020-02`, plus `telecom_support` part-time `2020-02 → 2022-12`, whose note states the part-time work overlapped Equifax, La Nación and INGENIA | **untouched**; the conflict is recorded in both entries' notes | `CONFLICT` | the span endpoints agree exactly (2018-03, 2022-12); only the internal split differs. Collapsing it would erase a documented full-time/part-time distinction and the concurrency it explains | — |
+| **Telecom — shape of the engagement** | ONE continuous block, `03/2018 – 12/2022` | TWO records: `telecom_lead` full-time `2018-03 → 2020-02`, plus `telecom_support` part-time `2020-02 → 2022-12`, whose note states the part-time work overlapped Equifax, La Nación and INGENIA | unchanged — **two records**, now marked `SHAPE CONFIRMED` in both notes | `CONFIRMED` | raised as a `CONFLICT` and **resolved by the candidate on 2026-08-25: two blocks, not one**. The CV renders the pair as a single span; the split is the canonical truth | high |
 | `pichincha` — engagement | Freelance | `contract` | `freelance` | `CORRECTED` | candidate's CV | high |
 | `pichincha` — stack | Azure + Terraform; OpenShift 4; CNCF evaluation in the DevOps Chapter; CI/CD in banking | `[Secure SDLC, Release Automation]` — README: "stack/scope kept general (specifics not provided)" | `[Azure, Terraform, Red Hat OpenShift, Secure SDLC, Release Automation]` + 5 bullets | `ADDED` | candidate's CV | high |
 | `fluxit` — mobile scope | CI/CD de aplicaciones Android/iOS | bullet said only "cross-browser testing" | bullet now names Android and iOS explicitly | `ADDED` | candidate's CV; BrowserStack was already canonical | high |
@@ -76,13 +76,20 @@ holds `certification` and `badge`. The loader rejects a file that mixes them.
 | Linux | Educación IT | — | present | present, untyped | `type: course` | `CONFIRMED` | high |
 | Java | Educación IT | — | present | present, untyped | `type: course` | `CONFIRMED` | high |
 | Provider label "SeaCCNA / Cisco" | — | — | CV writes "SeaCCNA / Cisco" | `Cisco Networking Academy` | unchanged; CV label recorded as a comment | `UNCHANGED` | high |
-| **AWS Certified Cloud Practitioner** | Amazon Web Services | unknown | badge rendered in the visual CV | `certifications: []` | `type: certification`, `status: needs_confirmation` | `NEEDS_CONFIRMATION` | low |
+| **AWS Certified Cloud Practitioner** | Amazon Web Services | not recorded | badge rendered in the visual CV, confirmed expired by the candidate | `certifications: []` | `type: certification`, `status: expired`, no dates | `CONFIRMED` (as expired) | high |
 | **Cisco Networking Academy** (badge) | Cisco | unknown | badge rendered in the visual CV | `certifications: []` | `type: badge`, `status: needs_confirmation` | `NEEDS_CONFIRMATION` | low |
 
 Only `status: confirmed` credentials are rendered into a CV or visible to JD
-matching. Both entries above are therefore recorded but **not claimable**. To
-promote either one, supply the issuer's record: issue date, and credential id
-where the issuer publishes one.
+matching. Neither entry above is claimable.
+
+* **AWS Certified Cloud Practitioner** — the candidate confirmed on 2026-08-25
+  that it has **expired**, and supplied no dates. It is recorded as
+  `status: expired` with no `issued`/`expires` field, and the loader rejects the
+  file if a date is ever added without one actually being supplied. Keeping the
+  record is honest; rendering it would claim a live credential.
+* **Cisco Networking Academy badge** — deliberately left at
+  `needs_confirmation` by the candidate on 2026-08-25. The documented study
+  record behind it (CyberOps 2024) stays a `training` entry and is not promoted.
 
 ---
 
@@ -139,16 +146,24 @@ gap, and the reported match went from 31% to 30%. Nothing else changed.
 
 ---
 
-## 6. Open items for the candidate
+## 6. Resolved by the candidate — 2026-08-25
 
-1. **Telecom shape** (`CONFLICT`) — is Telecom one continuous engagement
-   03/2018–12/2022, or the full-time lead role followed by a separate part-time
-   out-of-hours engagement? The canonical note asserts the latter and uses it to
-   explain overlaps with Equifax, La Nación and INGENIA. Left untouched.
-2. **AWS Certified Cloud Practitioner** (`NEEDS_CONFIRMATION`) — issue date and
-   credential id needed to make it claimable.
+1. **Telecom shape** — `RESOLVED`. Two blocks, not one: the full-time lead role
+   `2018-03 → 2020-02` and the separate part-time out-of-hours engagement
+   `2020-02 → 2022-12`. The canonical split stands and is now marked
+   `SHAPE CONFIRMED`; a test fails if the two records are ever collapsed.
+2. **AWS Certified Cloud Practitioner** — `RESOLVED`. Held but **expired**, and
+   no dates were supplied. Recorded as `status: expired`, never rendered, never
+   claimed.
+
+## 7. Open items — deliberately left incomplete
+
+The candidate asked on 2026-08-25 not to complete these. Neither blocks
+anything, and nothing downstream depends on them.
+
 3. **Cisco Networking Academy badge** (`NEEDS_CONFIRMATION`) — what the badge
-   certifies, and whether it should stay a badge or be merged into the CyberOps
-   training record.
-4. **Education** (`UNKNOWN`) — institution, program and dates, if there are any
-   to record.
+   certifies, and whether it should stay a badge or fold into the CyberOps
+   training record. Not claimable meanwhile.
+4. **Education** (`UNKNOWN`) — no institution, program or dates recorded. Stays
+   UNKNOWN/INCOMPLETE, which is not a claim that there is none, and training is
+   never used to infer it.

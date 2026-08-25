@@ -57,13 +57,20 @@ def test_no_rendered_date_is_marked_approximate(bundle):
         assert "~" not in exp.date_range(), f"{exp.id}: {exp.date_range()}"
 
 
-def test_telecom_conflict_is_recorded_not_silently_merged(bundle):
-    """The CV shows one continuous Telecom block; canonical keeps the
-    full-time/part-time split. That disagreement must stay visible."""
+def test_telecom_is_two_engagements_not_one(bundle):
+    """The CV renders Telecom as one 03/2018-12/2022 block. The candidate
+    confirmed on 2026-08-25 that it is really two engagements, so the split is
+    canonical and must never be collapsed back into a single record."""
     lead = _exp(bundle, "telecom_lead")
-    assert "CONFLICT" in (lead.note or ""), "the Telecom conflict was not recorded"
+    support = _exp(bundle, "telecom_support")
+    assert "SHAPE CONFIRMED" in (lead.note or ""),         "the confirmed two-block shape is not recorded"
+    assert "CONFLICT" not in (lead.note or ""),         "the Telecom conflict was resolved; the note still calls it open"
     assert lead.engagement == "full_time"
-    assert _exp(bundle, "telecom_support").engagement == "part_time"
+    assert support.engagement == "part_time"
+    assert (lead.start, lead.end) == ("2018-03", "2020-02")
+    assert (support.start, support.end) == ("2020-02", "2022-12")
+    telecom = [e for e in bundle.experiences if e.company == "Telecom"]
+    assert len(telecom) == 2, f"Telecom collapsed into {len(telecom)} record(s)"
 
 
 # --------------------------------------------------------------------------- #
@@ -176,12 +183,40 @@ def test_unconfirmed_credentials_are_recorded_but_not_claimable(bundle):
     names = {c["name"] for c in bundle.certifications_all}
     assert {"AWS Certified Cloud Practitioner", "Cisco Networking Academy"} <= names
     for cert in bundle.certifications_all:
-        assert cert["status"] in ("confirmed", "needs_confirmation")
+        assert cert["status"] in ("confirmed", "needs_confirmation", "expired")
         assert cert["type"] in ("certification", "badge")
-    # Nothing unconfirmed reaches the renderable/claimable list.
+    # Only confirmed credentials reach the renderable/claimable list.
     assert all(c.get("status") == "confirmed" for c in bundle.certifications)
     assert not bundle.certifications, (
         "a certification became claimable without a confirmed issuing record")
+
+
+def test_expired_certification_is_kept_but_never_claimed(bundle):
+    """The candidate holds an expired AWS Cloud Practitioner. Losing the record
+    would be forgetting a fact; rendering it would be claiming a live
+    credential. Neither is acceptable, so it is kept and not claimable."""
+    aws = next(c for c in bundle.certifications_all
+               if c["name"] == "AWS Certified Cloud Practitioner")
+    assert aws["status"] == "expired"
+    assert aws["issuer"] == "Amazon Web Services"
+    assert "issued" not in aws and "expires" not in aws,         "no date was supplied; none may be invented"
+    assert aws not in bundle.certifications
+
+
+def test_loader_rejects_dates_on_an_expired_credential():
+    with pytest.raises(DataError, match="expired entries carry no"):
+        _check_credential_types([{"name": "X", "issuer": "Y",
+                                  "type": "certification", "status": "expired",
+                                  "issued": "2021-01"}], [])
+
+
+def test_cisco_badge_stays_unconfirmed(bundle):
+    """Deliberately left incomplete by the candidate on 2026-08-25."""
+    cisco = next(c for c in bundle.certifications_all
+                 if c["name"] == "Cisco Networking Academy")
+    assert cisco["type"] == "badge"
+    assert cisco["status"] == "needs_confirmation"
+    assert cisco not in bundle.certifications
 
 
 def test_loader_rejects_a_type_conversion():
@@ -354,7 +389,11 @@ def test_reconciliation_report_covers_every_changed_record():
         assert subject in text, f"reconciliation report omits {subject}"
 
 
-def test_open_conflicts_are_listed_for_the_candidate():
+def test_resolved_and_open_items_are_both_recorded():
     text = RECONCILIATION_DOC.read_text(encoding="utf-8")
-    assert "Open items for the candidate" in text
-    assert re.search(r"Telecom shape.*CONFLICT", text, re.S | re.I)
+    assert "Resolved by the candidate" in text
+    assert "Open items" in text
+    # Resolved on 2026-08-25: the two-block Telecom shape, and the expired AWS
+    # certification. Deliberately left open: the Cisco badge and Education.
+    assert re.search(r"Telecom shape.*RESOLVED", text, re.S | re.I)
+    assert re.search(r"AWS Certified Cloud Practitioner.*expired", text, re.S | re.I)

@@ -83,7 +83,7 @@ def load_bundle(data_dir: str | Path) -> DataBundle:
         education=education_raw.get("education", []) or [],
         # Only confirmed credentials are renderable/claimable.
         certifications=[c for c in certifications_all
-                        if c.get("status") == "confirmed"],
+                        if c.get("status") in CLAIMABLE_CREDENTIAL_STATUSES],
         certifications_all=certifications_all,
         training=training_groups,
         languages=languages_raw.get("languages", []) or [],
@@ -107,7 +107,12 @@ def load_bundle(data_dir: str | Path) -> DataBundle:
 
 CREDENTIAL_TYPES = frozenset({"certification", "badge"})
 TRAINING_TYPES = frozenset({"training", "course"})
-CREDENTIAL_STATUSES = frozenset({"confirmed", "needs_confirmation"})
+# Only `confirmed` is renderable and claimable. `expired` is a credential the
+# candidate genuinely held whose validity has lapsed: keeping the record is
+# honest, presenting it as current would not be. `needs_confirmation` is a
+# credential visible somewhere with no issuing record behind it.
+CREDENTIAL_STATUSES = frozenset({"confirmed", "needs_confirmation", "expired"})
+CLAIMABLE_CREDENTIAL_STATUSES = frozenset({"confirmed"})
 
 
 def _check_credential_types(certifications: list[dict],
@@ -123,6 +128,13 @@ def _check_credential_types(certifications: list[dict],
     errors: list[str] = []
     for cert in certifications:
         name = cert.get("name", "<unnamed>")
+        # An expired credential must not smuggle a date back in through the
+        # renderer: the candidate said it lapsed and gave no dates, so there
+        # are none to render.
+        if cert.get("status") == "expired" and (cert.get("issued")
+                                                or cert.get("expires")):
+            errors.append(f"certification '{name}': expired entries carry no "
+                          "issue/expiry date unless one was actually supplied")
         ctype = cert.get("type")
         status = cert.get("status")
         if ctype not in CREDENTIAL_TYPES:
@@ -131,7 +143,7 @@ def _check_credential_types(certifications: list[dict],
         if status not in CREDENTIAL_STATUSES:
             errors.append(f"certification '{name}': status must be one of "
                           f"{sorted(CREDENTIAL_STATUSES)}, got {status!r}")
-        if status == "confirmed" and not cert.get("issuer"):
+        if status in ("confirmed", "expired") and not cert.get("issuer"):
             errors.append(f"certification '{name}': confirmed entries need an "
                           "issuer (evidence of a real issuing record)")
     for group in training_groups:

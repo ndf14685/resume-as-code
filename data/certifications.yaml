@@ -31,12 +31,13 @@ certifications:
   - name: AWS Certified Cloud Practitioner
     issuer: Amazon Web Services
     type: certification
-    status: needs_confirmation
+    status: expired
     evidence: >-
-      Badge rendered in the visual CV. No textual entry, issue date or
-      credential id was found in any canonical source, so it is recorded but
-      not claimed. Confirm the issue date and credential id to promote it to
-      status: confirmed.
+      Badge rendered in the visual CV. The candidate confirmed on 2026-08-25
+      that the certification has EXPIRED. No issue or expiry date is recorded
+      because none was supplied and none is invented. An expired credential is
+      never rendered and never claimable — presenting it as current would be a
+      false claim — but it is kept here so the record is not lost.
 
   - name: Cisco Networking Academy
     issuer: Cisco
