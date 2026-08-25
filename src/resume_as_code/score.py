@@ -108,13 +108,45 @@ def keyword_report(jd_text: str, cv_text: str, bundle: DataBundle,
     return report
 
 
+def _matrix_keyword_report(matrix, cv_text: str) -> KeywordReport:
+    """Keyword buckets computed from the real requirements matrix.
+
+    `missing_unsupported` keeps its meaning (correctly omitted, no evidence) but
+    no longer disappears from the score: `evaluate` takes coverage from
+    `matrix.coverage()`, which keeps those requirements in the denominator.
+    """
+    from .jdspec import normalize, term_present
+    low = normalize(cv_text)
+    report = KeywordReport()
+    for m in matrix.matches:
+        present = term_present(m.term, low)
+        if present and m.can_claim == "YES":
+            report.matched_exact.append(m.term)
+        elif m.can_claim == "YES":
+            evidence_shown = any(
+                term_present(e, low) for e in m.evidence if not e.startswith("text:"))
+            (report.matched_semantic if evidence_shown
+             else report.missing_supported).append(m.term)
+        else:
+            report.missing_unsupported.append(m.term)
+    return report
+
+
 def evaluate(pdf_path: str | Path, *, jd_text: str, bundle: DataBundle,
              intent: RoleIntent, data_dir: str | Path = "data",
-             min_ats: float = 8.5, min_recruiter: float = 8.0) -> QualityReport:
+             min_ats: float = 8.5, min_recruiter: float = 8.0,
+             matrix=None) -> QualityReport:
+    """`matrix` is the JD↔evidence MatchMatrix. When supplied it replaces the
+    keyword-dictionary coverage with the real weighted must-have coverage —
+    requirements with NO evidence stay in the denominator instead of being
+    silently reclassified as 'correctly omitted', which is how a CV missing
+    Veeam, Landing Zones and Entra ID used to report MUST_HAVE_COVERAGE 100%."""
     pdf_path = Path(pdf_path)
     checks = {c.name: c for c in run_ats_validation(pdf_path, data_dir)}
     cv_text = extract_text(pdf_path)
     kr = keyword_report(jd_text, cv_text, bundle, intent)
+    if matrix is not None:
+        kr = _matrix_keyword_report(matrix, cv_text)
 
     parse_ok = checks.get("selectable text (not rasterized)")
     pdf_parse_ok = bool(parse_ok and parse_ok.ok)
@@ -128,8 +160,8 @@ def evaluate(pdf_path: str | Path, *, jd_text: str, bundle: DataBundle,
     # identity: the composed headline noun must be recoverable from the text
     identity_ok = intent.job_title.split()[0].lower() in cv_text.lower() if intent.job_title else True
 
-    must_have = kr.coverage()
-    supported = must_have
+    must_have = matrix.coverage(musts_only=True) if matrix is not None else kr.coverage()
+    supported = kr.coverage()
     role_alignment = _role_alignment(cv_text, intent)
     unsupported = 0 if (no_invented and dates_ok) else 1
 
@@ -140,13 +172,17 @@ def evaluate(pdf_path: str | Path, *, jd_text: str, bundle: DataBundle,
     ] if checks.get(n) and checks[n].ok)
     parse_score = parse_pts / 6.0                      # 0..1
     structure_score = 1.0 if (sections_ok and chronology_ok) else 0.5
+    # The ATS score grades the DOCUMENT, so it uses `supported` (did the
+    # claimable keywords reach the page?), not `must_have` (does the candidate
+    # match the vacancy?). A hard JD the candidate half-matches must not be
+    # reported as a badly built CV.
     ats_score = round(10 * (0.45 * parse_score + 0.20 * structure_score
-                            + 0.35 * must_have), 2)
+                            + 0.35 * supported), 2)
 
     # ── RECRUITER_SCORE (0-10): role alignment + coverage + credibility + density
     credibility = 1.0 if unsupported == 0 else 0.0
     density = _density_score(cv_text)
-    recruiter_score = round(10 * (0.40 * role_alignment + 0.25 * must_have
+    recruiter_score = round(10 * (0.40 * role_alignment + 0.25 * supported
                                   + 0.20 * credibility + 0.15 * density), 2)
 
     failures: list[str] = []

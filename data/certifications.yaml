@@ -1,16 +1,49 @@
 # =============================================================================
-# CERTIFICATIONS  --  SINGLE SOURCE OF TRUTH (FACTS)
+# CERTIFICATIONS / BADGES  --  SINGLE SOURCE OF TRUTH (FACTS)
 # -----------------------------------------------------------------------------
-# No certifications were provided. Nothing is invented. Add real entries below
-# using the documented shape; until then this section is omitted from generated
-# CVs. See PENDING FACTUAL VALIDATION in the README.
+# Every entry carries an explicit `type` and `status`. Only `status: confirmed`
+# entries are rendered into a CV or made visible to JD matching; everything else
+# is recorded here so it is auditable WITHOUT being claimed.
 #
-# Example shape (do NOT fill with placeholder data):
+#   type:    certification | badge
+#   status:  confirmed          verifiable issuing record (issuer + issue date,
+#                               and a credential id when the issuer publishes one)
+#            needs_confirmation the credential is visible somewhere (e.g. a badge
+#                               rendered in the visual CV) but no issuing record
+#                               has been produced. NOT claimable.
+#
+# A needs_confirmation entry is NOT the same as "the candidate does not have it".
+# It is the reason the certification dimension reports UNKNOWN rather than
+# UNSUPPORTED when a JD asks for a certification: the sources are incomplete, so
+# a negative claim would be as unfounded as a positive one.
+#
+# Shape for a confirmed entry (do NOT fill with placeholder data):
 #   - name: <certification name>
 #     issuer: <issuing organization>
+#     type: certification
+#     status: confirmed
 #     issued: "YYYY-MM"
 #     expires: "YYYY-MM"   # or null
 #     credential_id: null  # omit if not public
 # =============================================================================
 
-certifications: []
+certifications:
+  - name: AWS Certified Cloud Practitioner
+    issuer: Amazon Web Services
+    type: certification
+    status: needs_confirmation
+    evidence: >-
+      Badge rendered in the visual CV. No textual entry, issue date or
+      credential id was found in any canonical source, so it is recorded but
+      not claimed. Confirm the issue date and credential id to promote it to
+      status: confirmed.
+
+  - name: Cisco Networking Academy
+    issuer: Cisco
+    type: badge
+    status: needs_confirmation
+    evidence: >-
+      Badge rendered in the visual CV. The underlying study record that IS
+      documented is the CyberOps (2024) program, held in data/training.yaml as
+      type: training. The badge is not promoted to a certification here, and
+      the training is not promoted to a badge there.

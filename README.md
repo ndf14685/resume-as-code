@@ -226,6 +226,45 @@ validation that re-checks the rendered file against the data.
 pytest        # schema, canonical integrity, tailoring, end-to-end ATS checks
 ```
 
+## The evidence pipeline
+
+Generation with `--auto-profile --jd <file>` runs the full pipeline. Each stage
+exists because its absence produced a specific, observed defect:
+
+    JD  ->  requirements model    jdspec.py       weighted, dimensioned requirements
+        ->  evidence inventory    inventory.py    granular retrieval over ALL canonical data
+        ->  match matrix          matching.py     REQUIREMENT -> EVIDENCE -> CAN CLAIM (YES/PARTIAL/NO)
+        ->  relevancy ranking     matching.py     space follows JD relevance, not recency
+        ->  composition           composition.py  title, summary, skills, bullet budget
+        ->  factual validation    factcheck.py    unsupported claims + omitted evidence
+        ->  quality gates         factcheck.py    fail-closed, blocks the render
+        ->  artifacts             pipeline.py     PDF/DOCX/TXT + debug report
+
+**Adapting means selecting, prioritising and better explaining real evidence --
+never adding technologies that do not exist.** A requirement with no evidence is
+reported as a gap, and it is a hard error for it to appear anywhere in the
+document.
+
+Two numbers are deliberately kept apart:
+
+* `matchScore` -- how well the candidate matches the vacancy. It legitimately
+  drops when the JD asks for tools the candidate has never used.
+* `renderedKeywordCoverage` -- of the requirements we are *entitled* to claim,
+  how many reached the page. Anything below 100% is a defect of the generator.
+
+Conflating the two is how a CV that had silently dropped two of three Azure
+engagements reported MUST_HAVE_COVERAGE 100%.
+
+The validator also fails closed on `RELEVANT_EVIDENCE_OMITTED`: if a must-have
+has three supporting engagements in the knowledge base and the CV surfaces one,
+the run recomposes with those engagements pinned, and blocks if it still cannot
+fit them.
+
+Every run writes `<job>-debug.json` and `<job>-debug.md` next to the artifacts:
+requirements extracted, evidence retrieved, the full match matrix, gaps, ranking
+with a rationale per experience, what was selected or condensed and why, factual
+validation findings, gate results and the exact rendered version.
+
 ## Known gaps / pending factual validation
 
 Nothing below is invented; these are simply unconfirmed and are handled
@@ -233,10 +272,28 @@ conservatively (omitted or left unlabeled) rather than guessed:
 
 - **Engagement type** is unlabeled (`null`) for AGEA/Clarín, INGENIA, Flux
   IT/La Nación, Equifax, HSBC, Credicoop and Telefónica — confirm and set.
-- **Telecom (lead role)** start is approximate (`~2018`, month unknown).
-- **Banco Pichincha** stack/scope is kept general (specifics not provided).
-- **Education** and **Certifications** are empty (none provided) and are
-  omitted from CVs until real entries are added.
+- ~~**Telecom (lead role)** start is approximate (`~2018`, month unknown).~~
+  CORRECTED 2026-08-25: this line was stale documentation. No experience
+  record has ever carried `approximate_start`; the canonical start has
+  always been the exact `2018-03`, confirmed against the CV. An unresolved
+  CONFLICT remains about the SHAPE of the Telecom history (one continuous
+  block in the CV vs. full-time + part-time split in canonical data) --
+  see docs/data-reconciliation/CV_CANONICAL_RECONCILIATION.md.
+- ~~**Banco Pichincha** stack/scope is kept general (specifics not provided).~~
+  RESOLVED 2026-08-25: the real stack (Azure, Terraform, OpenShift 4, CI/CD in
+  regulated banking, CNCF evaluation in the bank's DevOps Chapter) is recorded,
+  and the engagement is labelled `freelance`. This gap was the root cause of the
+  Logicalis regression: the pipeline is evidence-bound, so an unrecorded stack is
+  unretrievable no matter how well the JD is parsed. See
+  `tests/test_logicalis_azure_regression.py`.
+- **Education** is UNKNOWN/INCOMPLETE: no formal record exists in any source.
+  That is an absence of information, not a claim that there is none, and
+  training is never used to infer it.
+- **Certifications** now hold two `needs_confirmation` entries (AWS Certified
+  Cloud Practitioner, Cisco Networking Academy badge) sourced from badges in
+  the visual CV. Only `status: confirmed` entries are rendered or claimable,
+  so a JD asking for a certification resolves to UNKNOWN rather than
+  UNSUPPORTED while the source stays incomplete.
 
 ## License
 

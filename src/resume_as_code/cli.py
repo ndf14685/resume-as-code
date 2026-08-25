@@ -10,6 +10,7 @@ from pathlib import Path
 from .autoselect import select_profile
 from .compose import compose_plan
 from .jobmatch import analyze_job, render_analysis_md
+from .pipeline import run_pipeline
 from .score import evaluate as evaluate_quality
 from .semantic_planner import plan as semantic_plan
 from .tailor import build_from_plan
@@ -89,28 +90,29 @@ def cmd_generate(args) -> int:
     intent = None
     plan_result = None
     analysis = None
+    pipe = None
     if role_driven:
         # ask=None → deterministic authority (offline-safe default). --ask-cmd
         # inyecta el planner semántico (producción: OpenClaw/ai.ask); claims sin
         # evidencia se rechazan aguas arriba y cualquier fallo cae al determinista.
         ask_fn = _build_ask(args.ask_cmd) if getattr(args, "ask_cmd", None) else None
-        plan_result = semantic_plan(jd_text, bundle, ask=ask_fn)
-        result = plan_result
-        intent = result.intent
-        analysis = analyze_job(bundle, jd_text)
-        comp = compose_plan(bundle, intent)
         job_name = args.job_name or (job_path.stem if job_path else "Role")
-        resume = build_from_plan(
-            bundle, comp, target=job_name,
-            matched_skills=analysis.matched_skills,
-            extra_emphasis=analysis.extra_emphasis,
-        )
-        profile_name = intent.primary_role
         stem = f"Nestor_Fleitas_{job_name.title()}"
-        written = _write_outputs(resume, out_dir, stem, formats)
+        # Full evidence pipeline: JD → requirements → evidence → matching →
+        # ranking → composition → factual validation → gates → artifacts.
+        pipe = run_pipeline(
+            bundle, jd_text, job_name=job_name, out_dir=out_dir, stem=stem,
+            formats=formats, data_dir=args.data, ask=ask_fn)
+        plan_result = pipe.plan_result
+        intent = pipe.plan_result.intent
+        resume = pipe.resume
+        written = list(pipe.written)
+        profile_name = intent.primary_role
+        analysis = analyze_job(bundle, jd_text)
         report = render_analysis_md(
             analysis, job_name=job_name, profile_name=profile_name,
             canonical_hash=resume.canonical_hash,
+            matrix=pipe.matrix,
         )
         report_path = out_dir / f"{job_name}-analysis.md"
         report_path.write_text(report, encoding="utf-8")
@@ -157,15 +159,17 @@ def cmd_generate(args) -> int:
     ats_failures: list[str] = []
     quality = None
     if args.validate:
-        if role_driven and intent is not None:
-            # Scored, fail-closed quality gate (ATS_SCORE/RECRUITER_SCORE +
-            # keyword coverage). atsPassed reflects the full gate, so the NexusOS
-            # adapter blocks delivery on any quality failure, not just parse errors.
+        if role_driven and pipe is not None:
+            # Scored quality report (ATS_SCORE/RECRUITER_SCORE) computed against
+            # the REAL requirements matrix, plus the fail-closed pipeline gates.
+            # atsPassed reflects both, so the NexusOS adapter blocks delivery on
+            # an unsupported claim or omitted must-have evidence — not only on a
+            # parse error.
             quality = evaluate_quality(
                 artifacts["pdf"], jd_text=jd_text, bundle=bundle,
-                intent=intent, data_dir=args.data)
-            ats_passed = quality.passed
-            ats_failures = quality.failures
+                intent=intent, data_dir=args.data, matrix=pipe.matrix)
+            ats_passed = quality.passed and pipe.passed
+            ats_failures = list(dict.fromkeys(quality.failures + pipe.failures))
         else:
             checks = run_ats_validation(artifacts["pdf"], args.data)
             ats_passed = all(c.ok for c in checks)
@@ -205,6 +209,33 @@ def cmd_generate(args) -> int:
                 "seniority": intent.seniority,
                 "source": intent.source,
             }
+        if pipe is not None:
+            # Everything a caller needs to explain the CV to a human without
+            # parsing markdown: gates, gaps, omissions and the debug artifact.
+            payload.update({
+                "targetTitle": pipe.resume.headline,
+                "targetTagline": pipe.resume.tagline,
+                "mustHaveCoverage": pipe.coverage,
+                "matchScore": round(pipe.coverage * 100),
+                "renderedKeywordCoverage": pipe.rendered,
+                "claimableNotRendered": pipe.rendered_missing,
+                "gates": [{"name": g.name, "ok": g.ok, "detail": g.detail}
+                          for g in pipe.gates],
+                "gateFailures": pipe.failures,
+                "gapsNotIncluded": pipe.gap_labels(),
+                "gapsAll": [m.term for m in pipe.matrix.gaps()],
+                "partialEvidence": [m.term for m in pipe.matrix.partials()],
+                "unsupportedClaims": [c.term for c in pipe.report.unsupported_claims],
+                "relevantEvidenceOmitted": [
+                    {"term": o.term, "surfaced": o.surfaced, "required": o.required,
+                     "missing": o.missing_experiences}
+                    for o in pipe.report.omissions],
+                "recompositionPasses": pipe.iterations,
+                "pages": pipe.pages,
+                "debugReport": str(out_dir / f"{job_name}-debug.json"),
+                "requirementsExtracted": len(pipe.spec.requirements),
+                "mustHaveRequirements": len(pipe.spec.musts()),
+            })
         if plan_result is not None:
             payload["plannerAudit"] = plan_result.audit(
                 jd_text=jd_text or "", bundle=bundle)
@@ -217,6 +248,14 @@ def cmd_generate(args) -> int:
 
     print(f"Generated ({profile_name}"
           + (f" / {job_path}" if job_path else "") + "):")
+    if pipe is not None:
+        print(f"  TARGET_TITLE: {pipe.resume.headline}"
+              + (f" | {pipe.resume.tagline}" if pipe.resume.tagline else ""))
+        print("QUALITY_GATES")
+        for g in pipe.gates:
+            print(f"  {'PASS' if g.ok else 'FAIL'}  {g.name:34s} {g.detail}")
+        gaps = pipe.gap_labels(limit=10)
+        print("  GAPS_NOT_CLAIMED: " + (", ".join(gaps) if gaps else "—"))
     if quality is not None:
         print(quality.render())
     for p in written:

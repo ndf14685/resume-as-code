@@ -42,7 +42,10 @@ def test_overlap_between_allianz_and_pichincha_is_preserved():
     allianz = next(e for e in bundle.experiences if e.id == "allianz")
     pichincha = next(e for e in bundle.experiences if e.id == "pichincha")
     assert allianz.engagement == "full_time"
-    assert pichincha.engagement == "contract"
+    # Freelance, per the candidate's own record (confirmed 2026-08-25). The
+    # overlap with the formal Allianz role is the point of this test; the
+    # engagement label just has to be the non-full-time one.
+    assert pichincha.engagement == "freelance"
     # They genuinely overlap in time and both are kept (overlap not hidden).
     assert allianz.start_key() <= pichincha.end_key()
     assert pichincha.start_key() <= allianz.end_key()

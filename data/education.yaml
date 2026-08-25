@@ -1,11 +1,20 @@
 # =============================================================================
 # EDUCATION  --  SINGLE SOURCE OF TRUTH (FACTS)
 # -----------------------------------------------------------------------------
-# No education records were provided. Nothing is invented. Add real entries
-# below using the documented shape; until then this section is omitted from
-# generated CVs. See PENDING FACTUAL VALIDATION in the README.
+# STATUS: UNKNOWN / INCOMPLETE.
 #
-# Example shape (do NOT fill with placeholder data):
+# No formal education record (institution, degree, field, dates) exists in any
+# canonical source. That is NOT a statement that the candidate has none — it is
+# an absence of information, and it is recorded as such.
+#
+# Training and courses (data/training.yaml) must NEVER be used to infer formal
+# education. A DevOps course at MundoSE is not a degree, and an academy program
+# is not a university. Nothing is promoted across that boundary.
+#
+# Until real entries are added, the Education section is omitted from generated
+# CVs, and a JD requirement about formal education resolves to UNKNOWN.
+#
+# Shape (do NOT fill with placeholder data):
 #   - institution: <name>
 #     credential: <degree / program>
 #     field: <field of study>
@@ -13,5 +22,7 @@
 #     end: "YYYY"          # or "present"
 #     status: completed    # completed | in_progress | incomplete
 # =============================================================================
+
+education_status: unknown_incomplete
 
 education: []

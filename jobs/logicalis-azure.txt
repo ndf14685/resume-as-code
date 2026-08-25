@@ -1,0 +1,60 @@
+**Argentina - Sr Cloud Azure Infraestructura Engineer**
+Publicado en 20 de agosto de 2026
+Aplicaciones abiertas hasta 10 de octubre de 2026
+Lugar de trabajo: Ciudad de Buenos Aires - C
+Tipo de puesto: Fijo
+Modelo de trabajo: Híbrido
+También para personas con discapacidad
+**Descripción del puesto vacante**
+**_Logicalis valora la diversidad, brindando igualdad de oportunidades a todas las personas que califican para sus puestos, sin importar género, raza, orientación sexual, discapacidad o cualquier otra característica._**
+
+Somos **#ArchitectsOfChange**
+
+En Logicalis, ayudamos a miles de empresas a transformarse y prosperar en un mundo digital. Creemos que la tecnología puede cambiar el mundo y convertirlo en un lugar mejor para vivir. Por eso, fomentamos una cultura inclusiva y colaborativa, donde cada persona puede pertenecer, desarrollarse y evolucionar
+
+**Responsabilidades y asignaciones**
+🔍 Mira cómo será tu día a día:
+
+Diseñar, implementar y mantener Azure Landing Zones siguiendo las mejores prácticas de Microsoft (Cloud Adoption Framework).
+Diseñar y gestionar la estrategia de Backup y Disaster Recovery corporativo utilizando Veeam en entornos híbridos y cloud (Veeam Backup for Microsoft Azure).
+Automatizar el aprovisionamiento de infraestructura bajo la filosofía Infrastructure as Code (IaC) utilizando Terraform.
+Configurar, administrar y asegurar servicios de identidad y acceso mediante Microsoft Entra ID (Federación, RBAC, Conditional Access, etc.).
+Administrar y configurar entornos basados en Windows Server (y Linux cuando aplique) dentro de la infraestructura cloud.
+Velar por la seguridad, el cumplimiento normativo (governance) y la optimización de costos en las suscripciones de Azure.
+Implementar políticas de seguridad, gestión de accesos con Microsoft Entra ID y resguardo de datos (cifrado, inmutabilidad de backups).
+Configurar redes virtuales (VNets, VPNs, ExpressRoute, Private Endpoints) para asegurar la conectividad segura de los servicios cloud y locales.
+
+**Requisitos y calificaciones**
+🎯 ¿Qué necesitas para cubrir esta vacante?
+
+Sólida experiencia comprobable en despliegue y administración de workloads en Microsoft Azure .
+Experiencia práctica y avanzada en la implementación de Azure Landing Zones.
+Conocimientos Terraform/Bicep/Ansible (al menos uno).
+Conocimientos de Microsoft Entra ID (Azure AD) para la gestión de identidades y accesos.
+Experiencia en entornos Windows Server / Linux.
+Experiencia en diseño de redes en Azure (Subnets, Network Security Groups, Private Endpoints)..
+Conocimientos sólidos y prácticos de Networking cloud y tradicional (TCP/IP, DNS, VPNs, Firewalls, enrutamiento).
+Experiencia avanzada en la administración y diseño de esquemas de respaldo con Veeam Backup & Replication (entornos locales y cloud).
+
+Deseables:
+
+Experiencia o familiaridad con el ecosistema de IA de Azure (Azure AI Studio, Azure OpenAI Service.
+Conocimientos de contenedores y orquestación (Docker, Kubernetes / AKS).
+Experiencia con herramientas de CI/CD (GitHub Actions, Azure DevOps) para pipelines de infraestructura.
+Conocimientos básicos de scripting (PowerShell, Bash o Python) para automatización de tareas operativas.
+Experiencia en otra nube.
+Certificaciones oficiales de Microsoft (ej. AZ-104, AZ-305, AZ-700).
+Certificaciones de Veeam (VMCE).
+Experiencia en Infraestructura como Código (Terraform o Bicep).
+Manejo de monitoreo con Azure Monitor / Log Analytics.
+**Información adicional**
+🚀 Nuestros beneficios:
+
+🏥 Medicina prepaga de primer nivel.
+🍽 Tarjeta de alimentos.
+🎂 Birthday off: el día de tu cumpleaños lo tienes libre para disfrutar.
+🆘 Programa de asistencia al empleado en temas: emocionales, nutricionales, legales y financieros.
+❄️Semana adicional de vacaciones invernal.
+🏋🏿Bonificación en cuotas de Gimnasios.
+📚 Certificaciones para tu crecimiento profesional.
+🖥Convenio en capacitaciones con Educación IT.

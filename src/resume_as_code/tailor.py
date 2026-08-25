@@ -192,12 +192,19 @@ def build_from_plan(
     target: Optional[str] = None,
     matched_skills: Optional[set[str]] = None,
     extra_emphasis: Optional[list[str]] = None,
+    bullet_selector=None,                   # (Experience, limit, emphasis) -> [str]
 ) -> ResumeModel:
     """Build a ResumeModel from a role-driven ComposedPlan. Same truth rules as
     build_resume: every emitted skill/bullet is canonical; the plan only decides
-    positioning and how much of each real role is expanded."""
+    positioning and how much of each real role is expanded.
+
+    `bullet_selector` lets the evidence pipeline choose bullets by JD requirement
+    weight instead of by emphasis tags. Without it the legacy tag-based selector
+    is used, so existing callers are unaffected."""
     matched = matched_skills or set()
     emphasis = set(plan.emphasis_tags) | set(extra_emphasis or [])
+    pick = bullet_selector or (
+        lambda exp, limit, emph: _select_bullets(exp, emph, limit, matched))
 
     experiences: list[RenderExperience] = []
     for exp in bundle.experiences_sorted():
@@ -212,8 +219,7 @@ def build_from_plan(
         else:
             limit = plan.expand.get(eid, 2)
             experiences.append(RenderExperience(
-                **base, bullets=_select_bullets(exp, emphasis, limit, matched),
-                condensed=False))
+                **base, bullets=pick(exp, limit, emphasis), condensed=False))
 
     featured: list[RenderProject] = []
     proj_by_id = {p.id: p for p in bundle.projects}

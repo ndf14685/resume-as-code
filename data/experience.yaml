@@ -22,6 +22,7 @@ experiences:
   - id: itau
     company: Banco Itaú
     title: DevOps / DevSecOps Engineer
+    industry: Banking
     engagement: contract
     start: "2026-02"
     end: present
@@ -43,27 +44,44 @@ experiences:
   - id: pichincha
     company: Banco Pichincha
     title: DevOps / DevSecOps Consultant
-    engagement: contract
+    engagement: freelance
+    industry: Banking
     start: "2024-12"
     end: "2026-01"
     note: >-
-      Independent contractor engagement, held concurrently with the formal
+      Independent freelance engagement, held concurrently with the formal
       full-time DevSecOps role at Allianz Argentina. Allianz was the principal
       formal position; Pichincha was a parallel consulting engagement.
-    skills: [Secure SDLC, Release Automation]
+      Stack and scope confirmed by the candidate on 2026-08-25 (previously
+      recorded as "specifics not provided", which is why Azure/Terraform
+      evidence for this engagement was unretrievable).
+    skills: [Azure, Terraform, Red Hat OpenShift, Secure SDLC, Release Automation]
     bullets:
       - text: >-
-          Provided DevOps / DevSecOps consulting as an independent contractor,
-          held concurrently with a formal full-time role at Allianz Argentina.
-        tags: [devsecops, cloud, consulting]
+          Built and operated Azure infrastructure provisioned as code with
+          Terraform.
+        tags: [cloud, iac, automation]
       - text: >-
-          Advised on CI/CD and secure delivery practices for cloud
-          infrastructure.
-        tags: [cicd, security, cloud]
+          Managed containerized workloads on OpenShift 4 for banking
+          application teams.
+        tags: [containers, platform, cloud]
+      - text: >-
+          Optimized CI/CD processes for delivery in regulated banking
+          environments.
+        tags: [cicd, automation, devsecops]
+      - text: >-
+          Evaluated CNCF ecosystem frameworks within the bank's DevOps Chapter
+          to inform platform tooling decisions.
+        tags: [platform, architecture, containers]
+      - text: >-
+          Provided DevOps / DevSecOps consulting as an independent freelancer,
+          held concurrently with a formal full-time role at Allianz Argentina.
+        tags: [consulting]
 
   - id: allianz
     company: Allianz Argentina
     title: DevSecOps Engineer
+    industry: Insurance
     engagement: full_time
     start: "2024-07"
     end: "2025-05"
@@ -100,6 +118,7 @@ experiences:
   - id: arkho
     company: ARKHO
     title: Cloud Engineer
+    industry: Technology Consulting
     engagement: contract
     location: Chile (Remote)
     start: "2024-02"
@@ -124,6 +143,8 @@ experiences:
   - id: agea
     company: AGEA / Clarín
     title: Data Engineer / DevOps
+    client: Clarín
+    industry: Media
     engagement: full_time
     start: "2022-10"
     end: "2024-03"
@@ -148,6 +169,8 @@ experiences:
     company: INGENIA
     title: Technology Architect / SRE / DevSecOps
     engagement: full_time
+    client: Mercantil Andina, Geopagos
+    industry: Insurance & Payments
     start: "2022-04"
     end: "2022-09"
     skills:
@@ -155,6 +178,19 @@ experiences:
        Azure DevOps, Bitbucket, SRE Practices, Security Architecture,
        Platform Engineering]
     bullets:
+      # Split from a single compressed "Mercantil Andina: delivered Azure/AKS
+      # platforms with Terraform, Azure DevOps and Bitbucket" bullet. Same
+      # facts, retrievable per dimension: an Azure JD can now surface the AKS
+      # platform work and the Azure DevOps pipeline work independently instead
+      # of competing for one slot with the AWS engagement.
+      - text: >-
+          Mercantil Andina: designed and delivered Azure platforms on Azure
+          Kubernetes Service (AKS), provisioned as code with Terraform.
+        tags: [cloud, kubernetes, iac, architecture]
+      - text: >-
+          Mercantil Andina: built the delivery pipelines for those Azure
+          platforms with Azure DevOps and Bitbucket.
+        tags: [cicd, cloud, automation]
       - text: >-
           Acted as technology/platform architect across client engagements,
           designing cloud platform architecture.
@@ -163,31 +199,42 @@ experiences:
           Geopagos: built AWS Kubernetes platforms with Terraform, Airflow and
           GitLab CI.
         tags: [cloud, kubernetes, iac, cicd]
-      - text: >-
-          Mercantil Andina: delivered Azure/AKS platforms with Terraform,
-          Azure DevOps and Bitbucket.
-        tags: [cloud, kubernetes, iac, cicd]
 
   - id: fluxit
     company: Flux IT / La Nación
     title: DevOps Engineer / DevOps Mobile
     engagement: full_time
+    client: La Nación
+    industry: Media
     start: "2021-07"
     end: "2022-04"
     skills: [GCP, AWS, Azure, Docker, Jenkins, Azure DevOps, SonarQube, BrowserStack]
     bullets:
+      # Split from a single "multi-cloud DevOps (GCP, AWS, Azure) with
+      # Docker-based CI/CD via Jenkins and Azure DevOps" bullet. The Azure and
+      # Azure DevOps evidence used to be one clause inside a multi-cloud
+      # sentence, so an Azure JD could only ever surface it as a single line.
       - text: >-
-          Delivered multi-cloud DevOps (GCP, AWS, Azure) with Docker-based
-          CI/CD via Jenkins and Azure DevOps.
+          DevOps Mobile for La Nación: ran the delivery platform on Azure with
+          Azure DevOps pipelines.
+        tags: [cloud, cicd, automation]
+      - text: >-
+          Delivered multi-cloud DevOps across GCP, AWS and Azure with
+          Docker-based CI/CD via Jenkins.
         tags: [cloud, cicd, containers]
+      # Mobile scope (Android/iOS) confirmed against the candidate's CV on
+      # 2026-08-25; SonarQube/BrowserStack were already canonical. The CI/CD
+      # here is application delivery, NOT Azure networking or landing zones —
+      # this record must never be used to imply either.
       - text: >-
-          Integrated code quality (SonarQube) and cross-browser testing
-          (BrowserStack) into delivery pipelines.
-        tags: [cicd, quality]
+          Ran CI/CD for Android and iOS applications, integrating code quality
+          (SonarQube) and device/cross-browser testing (BrowserStack).
+        tags: [cicd, quality, mobile]
 
   - id: equifax
     company: Equifax
     title: SRE / DevOps Engineer
+    industry: Financial Services
     engagement: full_time
     start: "2020-02"
     end: "2021-06"
@@ -212,14 +259,26 @@ experiences:
   - id: telecom_lead
     company: Telecom
     title: Technical Lead / Configuration Manager / SOA
+    industry: Telecommunications
     engagement: full_time
     start: "2018-03"
     end: "2020-02"
     note: >-
-      Principal formal position. A separate, part-time out-of-hours consulting
-      engagement at Telecom (see 'Technical Consultant / Production Support')
-      ran later and is represented as a distinct entry -- this was NOT a single
-      continuous full-time job.
+      Principal formal position. Start date 2018-03 is EXACT and confirmed
+      against the candidate's CV on 2026-08-25 (there is no approximation on
+      this record; the README's "~2018, month unknown" line was stale
+      documentation, never a property of the data).
+      CV label for the role, in Spanish: "Desarrollo SOA / Area Tecnica -
+      Configuration Manager - Referente Tecnico".
+      CONFLICT (unresolved, do NOT merge silently): the CV presents Telecom as
+      ONE continuous engagement 03/2018-12/2022. The canonical record splits it
+      into this formal full-time position and a later part-time out-of-hours
+      engagement (see 'Technical Consultant / Production Support'), whose note
+      states the part-time work overlapped roles at Equifax, La Nacion and
+      INGENIA. Both representations share the same span endpoints (2018-03 and
+      2022-12). The split is kept because collapsing it would erase a
+      documented part-time/full-time distinction and the concurrency it
+      explains. See docs/data-reconciliation/CV_CANONICAL_RECONCILIATION.md.
     skills: [SOA, Oracle Service Bus, IBM DataPower, Linux, Java, Bash, Jenkins, Release Automation]
     bullets:
       - text: >-
@@ -234,6 +293,7 @@ experiences:
   - id: telecom_support
     company: Telecom
     title: Technical Consultant / Production Support
+    industry: Telecommunications
     engagement: part_time
     start: "2020-02"
     end: "2022-12"
@@ -241,6 +301,10 @@ experiences:
       Part-time, out-of-hours freelance engagement, held concurrently with
       roles at Equifax, La Nación and INGENIA. Explains the overlap in this
       period. This is distinct from the earlier full-time Telecom lead role.
+      End date 2022-12 is EXACT and confirmed against the candidate's CV on
+      2026-08-25; it is the closing endpoint of the 03/2018-12/2022 Telecom
+      span the CV shows as a single block. See the CONFLICT note on
+      'telecom_lead'.
     skills: [SOA, Oracle Service Bus, IBM DataPower, Production Support, Incident Response, Java, Bash]
     bullets:
       - text: >-
@@ -251,6 +315,8 @@ experiences:
   - id: hsbc
     company: Banco HSBC (via Tata Consultancy Services)
     title: Java / SOA Consultant
+    client: Banco HSBC
+    industry: Banking
     engagement: full_time
     start: "2017-10"
     end: "2018-06"
@@ -265,6 +331,8 @@ experiences:
   - id: credicoop
     company: Banco Credicoop (via Wenance)
     title: Java Developer / Architecture
+    client: Banco Credicoop
+    industry: Banking
     engagement: full_time
     start: "2014-10"
     end: "2017-09"
@@ -279,6 +347,7 @@ experiences:
   - id: telefonica
     company: Telefónica / Movistar
     title: Java / SOA Consultant
+    industry: Telecommunications
     engagement: full_time
     start: "2013-08"
     end: "2014-10"

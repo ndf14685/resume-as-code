@@ -71,14 +71,21 @@ def load_bundle(data_dir: str | Path) -> DataBundle:
 
     basics.email = resolve_email(data_dir, basics.email)
 
+    certifications_all = certs_raw.get("certifications", []) or []
+    training_groups = training_raw.get("training", []) or []
+    _check_credential_types(certifications_all, training_groups)
+
     bundle = DataBundle(
         basics=basics,
         skills=skills,
         experiences=experiences,
         projects=projects,
         education=education_raw.get("education", []) or [],
-        certifications=certs_raw.get("certifications", []) or [],
-        training=training_raw.get("training", []) or [],
+        # Only confirmed credentials are renderable/claimable.
+        certifications=[c for c in certifications_all
+                        if c.get("status") == "confirmed"],
+        certifications_all=certifications_all,
+        training=training_groups,
         languages=languages_raw.get("languages", []) or [],
     )
 
@@ -98,5 +105,53 @@ def load_bundle(data_dir: str | Path) -> DataBundle:
     return bundle
 
 
+CREDENTIAL_TYPES = frozenset({"certification", "badge"})
+TRAINING_TYPES = frozenset({"training", "course"})
+CREDENTIAL_STATUSES = frozenset({"confirmed", "needs_confirmation"})
+
+
+def _check_credential_types(certifications: list[dict],
+                            training_groups: list[dict]) -> None:
+    """Keep the credential vocabularies closed and non-overlapping.
+
+    Certification, badge, training and course are different kinds of evidence
+    and must never silently convert into one another — a Udemy course cannot
+    drift into a certification because someone edited a `type`, and a badge
+    cannot be promoted by adding a year. The two vocabularies are disjoint, so
+    a mistyped entry fails the load rather than reaching a CV.
+    """
+    errors: list[str] = []
+    for cert in certifications:
+        name = cert.get("name", "<unnamed>")
+        ctype = cert.get("type")
+        status = cert.get("status")
+        if ctype not in CREDENTIAL_TYPES:
+            errors.append(f"certification '{name}': type must be one of "
+                          f"{sorted(CREDENTIAL_TYPES)}, got {ctype!r}")
+        if status not in CREDENTIAL_STATUSES:
+            errors.append(f"certification '{name}': status must be one of "
+                          f"{sorted(CREDENTIAL_STATUSES)}, got {status!r}")
+        if status == "confirmed" and not cert.get("issuer"):
+            errors.append(f"certification '{name}': confirmed entries need an "
+                          "issuer (evidence of a real issuing record)")
+    for group in training_groups:
+        provider = group.get("provider", "<unknown provider>")
+        for item in group.get("items", []) or []:
+            name = item.get("name", "<unnamed>")
+            ttype = item.get("type")
+            if ttype in CREDENTIAL_TYPES:
+                errors.append(
+                    f"training '{provider} / {name}': {ttype!r} is a credential "
+                    "type; it belongs in data/certifications.yaml, not here")
+            elif ttype not in TRAINING_TYPES:
+                errors.append(f"training '{provider} / {name}': type must be one "
+                              f"of {sorted(TRAINING_TYPES)}, got {ttype!r}")
+    if errors:
+        raise DataError("credential type/status check failed:\n  - "
+                        + "\n  - ".join(errors))
+
+
 def fingerprint(bundle: DataBundle) -> str:
     return canonical_fingerprint(bundle)
+
+# probe

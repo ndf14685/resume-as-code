@@ -133,6 +133,12 @@ class Experience(BaseModel):
     id: str
     company: str
     title: str
+    # `client` is the end customer of a consulting/staffing engagement and
+    # `industry` the sector it belongs to. Both are FACTS used by the evidence
+    # inventory for retrieval (an Azure JD in banking must be able to find the
+    # banking Azure engagements) and by the summary's domain sentence.
+    client: Optional[str] = None
+    industry: Optional[str] = None
     engagement: Optional[Engagement] = None
     location: Optional[str] = None
     start: str
@@ -202,7 +208,13 @@ class DataBundle(BaseModel):
     experiences: list[Experience]
     projects: list[Project] = []
     education: list[dict] = []
+    # `certifications` holds ONLY status: confirmed entries — it is what the
+    # renderers and JD matching see, so a needs_confirmation badge can never be
+    # claimed or printed. `certifications_all` keeps every record, including the
+    # unconfirmed ones, so the reconciliation report and the UNKNOWN verdict can
+    # tell "not held" apart from "not yet verified".
     certifications: list[dict] = []
+    certifications_all: list[dict] = []
     training: list[dict] = []
     languages: list[dict] = []
 
@@ -262,6 +274,7 @@ def canonical_fingerprint(bundle: DataBundle) -> str:
                 {
                     "id": e.id,
                     "company": e.company,
+                    "client": e.client,
                     "title": e.title,
                     "engagement": e.engagement,
                     "start": e.start,
