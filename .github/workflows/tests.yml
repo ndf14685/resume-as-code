@@ -1,0 +1,65 @@
+name: Tests
+
+# Runs on every push to the trunk, not only on pull requests: this repo is
+# pushed to directly, so gating only PRs would gate nothing.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    # 3.10 is the floor declared in pyproject; 3.12 is what the server runs.
+    # Testing both keeps the floor honest instead of aspirational.
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install
+        # `-e .` and not just requirements.txt: tests/test_cli_driver.py spawns
+        # `python -m resume_as_code.cli` as a subprocess, which needs the
+        # package importable from any cwd. Installing only the requirements
+        # passes locally (the dev venv already has the package) and fails here
+        # with ModuleNotFoundError — verified before this workflow was written.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Canonical data integrity
+        # Cheap and fails loudly: the schema, the skill-catalog cross-check and
+        # the credential type/status vocabularies all load here. A broken
+        # data/*.yaml is worth reporting before 124 tests report it indirectly.
+        run: python -m resume_as_code.cli check
+
+      - name: Tests
+        # No contact.local.yaml here — it is git-ignored, so CI runs with no
+        # resolved email, exactly like a fresh clone. The suite must pass that
+        # way or the repo is not really reproducible.
+        run: python -m pytest -q
+
+      - name: Regression — Logicalis Azure vacancy
+        # Named separately so a failure says WHICH guarantee broke: this is the
+        # suite that pins evidence retrieval, the gap verdicts and the fact that
+        # no unevidenced technology reaches a generated CV.
+        run: python -m pytest tests/test_logicalis_azure_regression.py tests/test_canonical_reconciliation.py -q
