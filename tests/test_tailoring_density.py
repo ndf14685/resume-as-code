@@ -159,7 +159,8 @@ def test_nexusos_is_promoted_on_a_governance_vacancy(prex):
 
 def test_banking_evidence_surfaces_without_claiming_grc(prex):
     summary = normalize(prex.resume.summary)
-    assert term_present("regulated financial environments", summary), prex.resume.summary
+    assert term_present("regulated banking and financial-services environments",
+                        summary), prex.resume.summary
     # BANKING_DOMAIN_EVIDENCE is not FORMAL_GRC_EVIDENCE.
     rendered = normalize(extract_text(prex.artifacts["pdf"]))
     for inflated in ("grc", "regulatory specialist", "compliance lead",

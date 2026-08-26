@@ -254,18 +254,22 @@ def compose_evidence_summary(bundle: DataBundle, spec: JobSpec, matrix: MatchMat
         # A CV describes the candidate. It never narrates its own generation:
         # "Matched to this search on ..." told the reader a machine wrote this
         # for a specific ad, which is both unprofessional and a tell.
-        anchor = ranked_claims[0]
-        exp_labels: list[str] = []
-        for exp_id in anchor.experience_ids:
-            rec = inventory.by_id(exp_id)
-            if rec and rec.short_label not in exp_labels:
-                exp_labels.append(rec.short_label)
-        claim_str = (", ".join(labels[:-1]) + " and " + labels[-1]) if len(labels) > 1 \
-            else labels[0]
-        sentence = f"Hands-on across {claim_str}"
-        if exp_labels:
-            sentence += f", delivered at {', '.join(exp_labels[:3])}"
-        parts.append(sentence + ".")
+        #
+        # And it never fuses evidence across sources. "Hands-on across AI
+        # Governance, Agentic Systems and LLMs, delivered at Allianz Argentina"
+        # is built from three true claims and one true employer, and asserts
+        # something false: Agentic Systems comes from NexusOS, not from
+        # Allianz. A capability may only be attributed to a source that
+        # evidences it.
+        by_label = {display_term(m): m for m in pool if display_term(m) in labels}
+        employment = [l for l in labels if by_label[l].experience_ids]
+        independent = [l for l in labels if not by_label[l].experience_ids]
+
+        for clause in _attributed_clause(employment, by_label, inventory,
+                                         lead="Hands-on across"):
+            parts.append(clause)
+        for clause in _project_clause(independent, bundle):
+            parts.append(clause)
 
     # Banking/regulated domain evidence, when the vacancy asks for it. This is
     # BANKING_DOMAIN_EVIDENCE and stays that: having worked at four banks is not
@@ -275,13 +279,19 @@ def compose_evidence_summary(bundle: DataBundle, spec: JobSpec, matrix: MatchMat
             rec.company for rec in inventory.records
             if (rec.industry or "").lower().startswith(("banking", "financial"))))
         if len(banks) >= 2:
-            shown = [b.split(" (")[0] for b in banks[:3]]
-            more = f" and {len(banks) - 3} more" if len(banks) > 3 else ""
-            parts.append("Delivered inside regulated financial environments at "
-                         f"{', '.join(shown)}{more}.")
+            # Name two, or say the category. "Banco Itaú, Banco Pichincha,
+            # Equifax and 2 more" reads as machine output and adds nothing a
+            # reader wants: the point is the sector, not the count.
+            named = [b.split(" (")[0] for b in banks[:2]]
+            parts.append(
+                "Delivered inside regulated banking and financial-services "
+                f"environments, including {' and '.join(named)}.")
 
     # Sentence 3: the strongest non-JD differentiator that is real.
-    if intent_wants_ai(spec):
+    already_named = any("NexusOS" in part for part in parts)
+    if already_named:
+        pass
+    elif intent_wants_ai(spec):
         parts.append("Creator of NexusOS, a governed execution platform for "
                      "autonomous AI agents — capability-based authorization, "
                      "policy, verification and audit.")
@@ -322,6 +332,70 @@ def _relevant_projects(bundle: DataBundle, spec: JobSpec, matrix: MatchMatrix,
         if rank >= 0.7 or claims >= 3:
             chosen.append(project.id)
     return chosen
+
+
+def _natural_list(items: list[str], limit: int = 3) -> str:
+    """A human list. Never "and N more": a CV names things or names a category."""
+    shown = items[:limit]
+    if len(shown) == 1:
+        return shown[0]
+    return ", ".join(shown[:-1]) + " and " + shown[-1]
+
+
+def _attributed_clause(labels: list[str], by_label: dict, inventory,
+                       lead: str) -> list[str]:
+    """One clause per set of capabilities that share a source.
+
+    Attribution is only emitted when EVERY capability in the clause is
+    evidenced at the named employer. Where they are not, the sentence is split
+    or the attribution dropped — the claim stays true either way, it just stops
+    borrowing credibility from a source that does not back it.
+    """
+    if not labels:
+        return []
+
+    # Attribute the LARGEST leading group that shares a source, rather than
+    # dropping the attribution because one trailing capability came from
+    # somewhere else. "Azure, Terraform and Cloud Security, delivered at
+    # Banco Pichincha" would be fusion; "Azure and Terraform, delivered at
+    # Banco Pichincha and INGENIA" is true, and keeps the information a reader
+    # wants. What falls outside the group is still in Core Skills.
+    group, shared = list(labels), set()
+    while group:
+        common = None
+        for label in group:
+            ids = set(by_label[label].experience_ids)
+            common = ids if common is None else (common & ids)
+        if common:
+            shared = common
+            break
+        group = group[:-1]
+
+    if not group:
+        return [f"{lead} {_natural_list(labels)}."]
+
+    names: list[str] = []
+    for exp_id in sorted(shared):
+        rec = inventory.by_id(exp_id)
+        if rec and rec.short_label not in names:
+            names.append(rec.short_label)
+    claim_str = _natural_list(group)
+    if not names:
+        return [f"{lead} {claim_str}."]
+    return [f"{lead} {claim_str}, delivered at {_natural_list(names, limit=2)}."]
+
+
+def _project_clause(labels: list[str], bundle) -> list[str]:
+    """Capabilities evidenced by independent work, named as such.
+
+    Keeping them in their own clause is the point: it is honest about where the
+    evidence comes from, and it is stronger than a vague attribution.
+    """
+    if not labels or not bundle.projects:
+        return []
+    project = bundle.projects[0]
+    return [f"Complemented by independent work on {_natural_list(labels)} "
+            f"through {project.name}."]
 
 
 def intent_wants_ai(spec: JobSpec) -> bool:
