@@ -19,7 +19,9 @@ from typing import Any, Callable, Optional
 
 from .composition import compose_from_evidence, display_term
 from .debugreport import build_debug_payload, write_debug
-from .factcheck import GateResult, evaluate_gates, run_factcheck
+from .factcheck import (GateResult, Gate, evaluate_gates,
+                        evaluate_pipeline_gates, run_factcheck,
+                        scan_rendered_artifact)
 from .inventory import build_inventory
 from .jdspec import parse_jd
 from .matching import (assign_bullet_budget, build_match_matrix,
@@ -41,7 +43,7 @@ MIN_RENDERED_COVERAGE = 0.90
 
 @dataclass
 class PipelineResult:
-    resume: ResumeModel
+    resume: Any
     spec: Any
     inventory: Any
     matrix: Any
@@ -57,14 +59,19 @@ class PipelineResult:
     pages: Optional[int] = None
     iterations: list[dict[str, Any]] = field(default_factory=list)
     debug: dict[str, Any] = field(default_factory=dict)
+    pipeline_gates: list[Gate] = field(default_factory=list)
+    artifact_findings: list = field(default_factory=list)
+    admitted: bool = True
+    refusal: str = ""
+    headline_audit: dict[str, Any] = field(default_factory=dict)
 
     @property
     def passed(self) -> bool:
-        return all(g.ok for g in self.gates)
+        return self.admitted and all(g.ok for g in self.pipeline_gates)
 
     @property
     def failures(self) -> list[str]:
-        return [g.name for g in self.gates if not g.ok]
+        return [g.name for g in self.pipeline_gates if not g.ok]
 
     def gap_labels(self, *, musts_only: bool = True, limit: int = 8) -> list[str]:
         """Gaps worth telling a human about, most actionable first.
@@ -111,6 +118,25 @@ def run_pipeline(bundle: DataBundle, jd_text: str, *, job_name: str,
 
     # 1. JD → requirements model
     spec = parse_jd(jd_text)
+
+    # 1b. ADMISSION. A control message, a greeting or a complaint is not a
+    #     vacancy. Before this gate existed, every Telegram message in the CV
+    #     topic became a "job description": a 44-char "no me des respuestas"
+    #     parsed to zero requirements and surfaced as a quality-gate rejection,
+    #     and a 70-char complaint scored 100% with no gaps and shipped a PDF.
+    if spec.admission is not None and not spec.admission.accepted:
+        gate = Gate("G1_JD_VALID", False, reason=spec.admission.reason,
+                    diagnostic=f"kind={spec.admission.kind} "
+                               f"signals={spec.admission.signals}",
+                    recoverable=True)
+        return PipelineResult(
+            resume=None, spec=spec, inventory=None, matrix=None, ranked=[],
+            plan_result=None, gates=[], report=None, coverage=0.0,
+            pipeline_gates=[gate], admitted=False,
+            refusal=spec.admission.reason,
+            debug={"admission": {"accepted": False, "kind": spec.admission.kind,
+                                 "reason": spec.admission.reason,
+                                 "signals": spec.admission.signals}})
 
     # 2. Evidence inventory from ALL canonical sources (never a previous CV)
     inventory = build_inventory(bundle)
@@ -213,16 +239,47 @@ def run_pipeline(bundle: DataBundle, jd_text: str, *, job_name: str,
     cv_text = extract_text(artifacts["pdf"]) if artifacts.get("pdf")         and Path(artifacts["pdf"]).exists() else render_txt(resume)
     rendered, rendered_missing = rendered_coverage(matrix, cv_text)
 
+    # 6b. Scan the artifact the user will actually receive.
+    from .headline import forbidden_claim_terms
+    artifact_findings = []
+    if artifacts.get("pdf") and Path(artifacts["pdf"]).exists():
+        artifact_findings = scan_rendered_artifact(
+            artifacts["pdf"],
+            forbidden_terms=forbidden_claim_terms(inventory, matrix),
+            target_role=getattr(spec, "target_role", ""),
+            headline=f"{resume.headline} {resume.tagline or ''}",
+            granted_seniority=(getattr(comp, "headline_audit", {}) or {}).get("seniority"))
+
     gates = evaluate_gates(
         spec=spec, inventory=inventory, matrix=matrix, ranked=ranked,
         report=report, coverage=coverage, min_coverage=MIN_RENDERED_COVERAGE,
         pages=pages, pdf_ok=pdf_ok, pdf_detail=pdf_detail,
         rendered=rendered, rendered_missing=rendered_missing)
+    pipeline_gates = evaluate_pipeline_gates(
+        spec=spec, inventory=inventory, matrix=matrix, ranked=ranked,
+        report=report, artifact_findings=artifact_findings, pages=pages,
+        pdf_ok=pdf_ok, pdf_detail=pdf_detail, rendered=rendered,
+        rendered_missing=rendered_missing)
 
+    payload_extra = {
+        "classification": {
+            "targetRole": spec.target_role,
+            "primaryFamily": spec.primary_family,
+            "secondaryDomains": spec.secondary_domains,
+            "seniorityRequestedByJD": spec.seniority_requested,
+            "admission": {"accepted": True, "kind": spec.admission.kind,
+                          "signals": spec.admission.signals}
+                         if spec.admission else {},
+        },
+        "headline": getattr(comp, "headline_audit", {}),
+        "artifactFindings": [f.__dict__ for f in artifact_findings],
+        "pipelineGates": [g.as_dict() for g in pipeline_gates],
+    }
     payload = build_debug_payload(
         jd_text=jd_text, spec=spec, inventory=inventory, matrix=matrix,
         ranked=ranked, resume=resume, report=report, gates=gates,
         coverage=coverage, iterations=iterations, artifacts=artifacts)
+    payload.update(payload_extra)
     if write_debug_artifacts:
         written.extend(write_debug(out_dir, job_name, payload))
 
@@ -231,4 +288,6 @@ def run_pipeline(bundle: DataBundle, jd_text: str, *, job_name: str,
         ranked=ranked, plan_result=plan_result, gates=gates, report=report,
         coverage=coverage, rendered=rendered, rendered_missing=rendered_missing,
         artifacts=artifacts, written=written, pages=pages,
-        iterations=iterations, debug=payload)
+        iterations=iterations, debug=payload,
+        pipeline_gates=pipeline_gates, artifact_findings=artifact_findings,
+        headline_audit=getattr(comp, "headline_audit", {}))

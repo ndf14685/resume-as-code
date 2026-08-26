@@ -6,13 +6,36 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
+# A one-line skill list is NOT a job description, and since 2026-08-26 the
+# pipeline refuses one rather than generating a CV from it. These driver tests
+# are about the JSON contract, so they now feed a realistic posting.
+REAL_JD = """DevOps Engineer
+
+About the role: we are looking for a DevOps Engineer to build and operate our
+cloud platform.
+
+Key responsibilities:
+- Design and maintain Kubernetes platforms and CI/CD pipelines.
+- Provision infrastructure as code with Terraform across cloud environments.
+- Improve observability, monitoring and alerting for production services.
+- Automate delivery workflows and reduce manual operations.
+
+Requirements:
+- 5+ years of experience with Kubernetes, Docker and Terraform.
+- Strong CI/CD background (Jenkins, GitLab CI or Azure DevOps).
+- Scripting in Bash or Python. Linux administration.
+
+Nice to have: cloud security exposure.
+Location: Remote. Benefits: full-time position.
+"""
+
 def _run(args, cwd=ROOT):
     return subprocess.run([sys.executable, "-m", "resume_as_code.cli", *args],
                           cwd=cwd, capture_output=True, text=True)
 
 def test_driver_emits_json_with_auto_profile_and_validation(tmp_path):
     jd = tmp_path / "job.txt"
-    jd.write_text("DevOps engineer: Kubernetes, Terraform, CI/CD, IaC, observability.")
+    jd.write_text(REAL_JD)
     out = tmp_path / "out"
     res = _run(["generate", "--jd", str(jd), "--auto-profile", "--validate",
                 "--json", "--out", str(out), "--job-name", "Devops Role"])
@@ -51,7 +74,7 @@ def test_driver_reports_the_gap_analysis_in_json(tmp_path):
     """El consumidor del CV (CareerOps / Jarvis) tiene que saber que le falta al
     candidato sin parsear markdown ni importar internals de este paquete."""
     jd = tmp_path / "job.txt"
-    jd.write_text("SRE: Kubernetes, Terraform, Prometheus, Go, Rust, COBOL.")
+    jd.write_text(REAL_JD.replace("DevOps Engineer", "Site Reliability Engineer"))
     out = tmp_path / "out"
     res = _run(["generate", "--jd", str(jd), "--auto-profile", "--json",
                 "--out", str(out), "--job-name", "Gaps"])

@@ -1,0 +1,80 @@
+Descripción completa del empleo
+Azumo is looking for a highly technical and hands-on DevSecOps Engineer / Security Solutions Lead to own and strengthen the security posture of our platform, infrastructure, and AI-driven systems.
+This is a proactive, operationally-focused role—not just policy work. You will actively secure systems, remediate vulnerabilities, and collaborate across engineering and compliance to ensure continuous resilience. Working in a remote-first, high-trust engineering culture, you will join us as we scale rapidly following our Series A funding to power the future of modern financial infrastructure.
+Location: Remote Latin America
+In this role, you will secure and improve the systems that power our FinTech ecosystem while also serving as a key representative of our security program during customer and partner due diligence processes.
+Key Responsibilities
+Security Engineering & System Hardening
+Secure and harden cloud infrastructure, applications, APIs, internal systems, and operational workflows. · Implement and maintain security controls across production environments, CI/CD pipelines, cloud infrastructure, and internal tooling.
+Work directly with engineering teams to remediate vulnerabilities and improve secure development practices.
+Ensure encryption, secrets management, logging, monitoring, and access controls are properly implemented and continuously maintained.
+Design and improve security architecture across cloud-native and distributed systems. · Build scalable security processes that integrate directly into engineering and operational workflows.
+Vulnerability Management & Offensive Security
+Continuously identify, assess, prioritize, and remediate security vulnerabilities across infrastructure, applications, APIs, and operational systems.
+Proactively search for weaknesses through vulnerability scanning, penetration testing, adversarial testing, threat modeling, manual security reviews
+Coordinate remediation efforts across engineering and operations teams. · Validate fixes and ensure long-term mitigation strategies are implemented.
+Improve detection and prevention capabilities for emerging threats.
+Help establish a culture of continuous security improvement and operational accountability.
+AI Security & Emerging Threat Protection
+Secure AI-driven systems and automated agents against emerging threats including prompt injection, adversarial inputs, unauthorized or unintended actions, unsafe outputs, data leakage and exposure risks.
+Design and implement guardrails and validation layers for AI-generated actions.
+Ensure AI systems safely handle untrusted inputs from IVRs, web systems, APIs, and human interactions.
+Monitor AI system behavior for anomalies, abuse attempts, or unsafe decision-making.
+Partner with engineering teams to ensure AI systems are observable, auditable, bounded, and fail safely.
+Help define operational and technical controls for responsible AI deployment.
+Monitoring, Detection & Incident Response
+Improve and maintain security monitoring, alerting, logging, and incident response capabilities.
+Investigate suspicious activity, anomalies, and potential security incidents.
+Lead or support incident response efforts, root cause analysis, and remediation planning.
+Ensure operational visibility into system health, access patterns, and security events.
+Recommend and implement preventative measures following incidents or security discoveries.
+Compliance, Audit & Risk Management
+Collaborate closely with Compliance and Operations teams to ensure security controls meet SOC 2 requirements, PCI DSS requirements, Financial and consumer data security regulations.
+Assist with audit preparation, evidence collection, security documentation, and control validation.
+Help operationalize security controls so compliance is continuously maintained—not just audit-driven.
+Participate in risk assessments, control reviews, and remediation planning.
+Ensure systems handling sensitive financial and consumer data align with regulatory and internal security requirements.
+Customer & Partner Security EngagementParticipate directly in customer and partner due diligence processes.
+Answer technical security questions from enterprise customers, banks and financial institutions, prospects and partners, auditors and third-party assessors
+Support and complete security questionnaires, RFPs, vendor risk assessments
+Clearly communicate security architecture, operational controls, monitoring capabilities, and security practices.
+Help build trust with prospects and accelerate enterprise partnerships through strong security leadership and communication.
+Cross-Functional Collaboration
+Work closely with Engineering, Product, Compliance, Operations, and Leadership teams to improve overall security posture.
+Contribute to architecture reviews, security planning, engineering roadmaps, and operational processes.
+Help embed security-first thinking into engineering and operational culture.
+Partner with teams to balance security, reliability, scalability, and business velocity.
+
+
+Requirements
+
+Required Qualifications
+5+ years of hands-on experience in security engineering, infrastructure security, application security, DevSecOps, vulnerability management, offensive security
+Exceptional knowledge of the AWS ecosystem
+Experience identifying and remediating vulnerabilities in production systems.
+Working knowledge of compliance frameworks: SOC 2, PCI, and best practices for FinTech environments.
+Self-starter mindset: able to drive projects, make decisions, and prioritize ruthlessly in a fast-moving environment.
+Excellent communication skills with the ability to articulate complex systems to both engineering and business stakeholders.
+Preferred Qualifications
+Experience securing AI/LLM-powered systems or automated agents.
+Familiarity with prompt injection attacks, adversarial AI techniques, AI guardrails and validation systems, behavioral anomaly detection
+Experience with cloud security tooling, SIEM and observability platforms, penetration testing tools, endpoint security platform, infrastructure-as-code security
+Prior experience in high-growth startup environments and FinTech, banking or payments.
+Certifications such as CISSP, CISM, AWS Security Specialty or similar
+
+
+Benefits
+
+Company benefits include:
+Paid Time Off
+Mentored Career Development
+U.S. Holidays
+USD Remuneration
+Profit Sharing
+Maternity Coverage
+100% Remote
+About Azumo
+Based in San Francisco, California, Azumo is an innovative software development firm specializing in AI software development services. We help companies of all sizes build intelligent applications by combining expertise in data, cloud, and AI. Our talented AI developers are trusted to deliver Top AI Development services in Generative AI, intelligent automation, and custom machine learning solutions.
+At Azumo, we believe in professional and personal growth. As a recognized AI Development company, we support our engineers in mastering the latest technologies and delivering Top AI Development services worldwide. Our culture emphasizes collaboration, continuous learning, and solving complex problems with modern AI solutions. We believe in giving back to our community and will volunteer our time to philanthropy, open-source initiatives and sharing our knowledge.
+If you are qualified for the opportunity and looking for a challenge please apply online at Azumo/join-our-team or connect with us at people@azumo.co
+&

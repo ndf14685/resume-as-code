@@ -63,6 +63,24 @@ def _build_ask(ask_cmd: str):
     return ask
 
 
+_REFUSAL_TEXT = {
+    "control": ("Recibí una instrucción, no una búsqueda. No generé ningún CV.\n"
+                "Mandame la descripción del puesto y lo armo."),
+    "too_short": ("Eso es muy corto para ser una búsqueda ({chars} caracteres). "
+                  "No generé nada.\nPegá el aviso completo y lo proceso."),
+    "conversation": ("No parece una descripción de puesto, así que no generé un "
+                     "CV.\nMotivo: {reason}"),
+}
+
+
+def _refusal_reply(pipe) -> str:
+    """What Telegram shows when the input was not a vacancy."""
+    kind = pipe.debug["admission"]["kind"]
+    signals = pipe.debug["admission"]["signals"]
+    template = _REFUSAL_TEXT.get(kind, _REFUSAL_TEXT["conversation"])
+    return template.format(chars=signals.get("chars", 0), reason=pipe.refusal)
+
+
 def cmd_generate(args) -> int:
     try:
         bundle = load_bundle(args.data)
@@ -103,11 +121,34 @@ def cmd_generate(args) -> int:
         pipe = run_pipeline(
             bundle, jd_text, job_name=job_name, out_dir=out_dir, stem=stem,
             formats=formats, data_dir=args.data, ask=ask_fn)
+        if not pipe.admitted:
+            # Not a job description. Nothing is rendered, nothing is delivered,
+            # and the caller is told what it actually received — the previous
+            # behaviour was to generate a CV from a control message and then
+            # reject it with "quality gate: JD_PARSED".
+            gate = pipe.pipeline_gates[0]
+            payload = {
+                "admitted": False,
+                "inputKind": pipe.debug["admission"]["kind"],
+                "atsPassed": False,
+                "atsFailures": [gate.name],
+                "artifacts": {},
+                "gates": [g.as_dict() for g in pipe.pipeline_gates],
+                "reason": pipe.refusal,
+                "diagnostic": gate.diagnostic,
+                "recoverable": gate.recoverable,
+                "replyText": _refusal_reply(pipe),
+            }
+            if args.json_out:
+                print(json.dumps(payload))
+                return 0
+            print(f"NOT A JOB DESCRIPTION: {pipe.refusal}", file=sys.stderr)
+            return 3
         plan_result = pipe.plan_result
         intent = pipe.plan_result.intent
         resume = pipe.resume
         written = list(pipe.written)
-        profile_name = intent.primary_role
+        profile_name = pipe.spec.primary_family or intent.primary_role
         analysis = analyze_job(bundle, jd_text)
         report = render_analysis_md(
             analysis, job_name=job_name, profile_name=profile_name,
@@ -230,6 +271,19 @@ def cmd_generate(args) -> int:
                     {"term": o.term, "surfaced": o.surfaced, "required": o.required,
                      "missing": o.missing_experiences}
                     for o in pipe.report.omissions],
+                "admitted": True,
+                "targetRole": pipe.spec.target_role,
+                "primaryFamily": pipe.spec.primary_family,
+                "secondaryDomains": pipe.spec.secondary_domains,
+                "seniorityRequestedByJD": pipe.spec.seniority_requested,
+                "candidateHeadline": pipe.resume.headline,
+                "headlineAudit": pipe.headline_audit,
+                "artifactFindings": [f.__dict__ for f in pipe.artifact_findings],
+                "pipelineGates": [g.as_dict() for g in pipe.pipeline_gates],
+                "supportedCount": len(pipe.matrix.claimable()),
+                "partialCount": len(pipe.matrix.partials()),
+                "unsupportedCount": len(pipe.matrix.unsupported()),
+                "unknownCount": len(pipe.matrix.unknowns()),
                 "recompositionPasses": pipe.iterations,
                 "pages": pipe.pages,
                 "debugReport": str(out_dir / f"{job_name}-debug.json"),

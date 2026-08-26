@@ -265,3 +265,157 @@ def evaluate_gates(*, spec: JobSpec, inventory: EvidenceInventory,
 
     order = {name: i for i, name in enumerate(GATE_ORDER)}
     return sorted(gates, key=lambda g: order.get(g.name, 99))
+
+
+# --------------------------------------------------------------------------- #
+# FINAL ARTIFACT FACTCHECK — on the PDF the user actually receives
+# --------------------------------------------------------------------------- #
+# Validating the composed model is not enough. The model is one layer; the
+# renderer is another, and a claim introduced after composition would have
+# sailed through. This reads the text back out of the rendered PDF.
+
+@dataclass
+class ArtifactFinding:
+    term: str
+    kind: str          # seniority | credential | experience | jd-title
+    where: str
+
+
+def scan_rendered_artifact(pdf_path, *, forbidden_terms, target_role: str,
+                           headline: str,
+                           granted_seniority: Optional[str] = None
+                           ) -> list[ArtifactFinding]:
+    """Extract the finished PDF's text and look for claims we cannot support."""
+    from .validate import extract_text
+    findings: list[ArtifactFinding] = []
+    try:
+        text = normalize(extract_text(pdf_path))
+    except Exception as exc:  # noqa: BLE001 — unreadable PDF is RENDER_VALID's job
+        return [ArtifactFinding(f"unreadable: {exc}", "render", str(pdf_path))]
+
+    from .headline import (FORBIDDEN_CREDENTIALS, FORBIDDEN_EXPERIENCE_CLAIMS,
+                           FORBIDDEN_SENIORITY, forbidden_headline_seniority)
+
+    # Seniority is judged where it is claimed. The headline is the claim; the
+    # experience section legitimately contains old titles like "Technical Lead
+    # / Configuration Manager / SOA", which is a fact, not a claim about now.
+    head = normalize(headline or "")
+    for term in forbidden_headline_seniority(granted_seniority):
+        if term_present(term, head):
+            findings.append(ArtifactFinding(term, "seniority", "headline"))
+
+    for term in forbidden_terms:
+        if not term_present(term, text):
+            continue
+        kind = ("credential" if term in FORBIDDEN_CREDENTIALS
+                else "experience" if term in FORBIDDEN_EXPERIENCE_CLAIMS
+                else "claim")
+        findings.append(ArtifactFinding(term, kind, "rendered PDF"))
+
+    # The vacancy's own title must not be the candidate's headline.
+    if target_role and headline and normalize(target_role) == normalize(headline):
+        findings.append(ArtifactFinding(target_role, "jd-title", "headline"))
+
+    # Generation must never narrate itself.
+    for tell in ("matched to this search", "this position", "the job description",
+                 "target role", "this vacancy"):
+        if term_present(tell, text):
+            findings.append(ArtifactFinding(tell, "claim", "rendered PDF"))
+    return findings
+
+
+# --------------------------------------------------------------------------- #
+# G1..G5 — few gates, each one real
+# --------------------------------------------------------------------------- #
+@dataclass
+class Gate:
+    name: str
+    ok: bool
+    reason: str = ""
+    diagnostic: str = ""
+    recoverable: bool = False
+
+    def as_dict(self) -> dict:
+        return {"gate": self.name, "ok": self.ok, "reason": self.reason,
+                "diagnostic": self.diagnostic, "recoverable": self.recoverable}
+
+
+GATES = ("G1_JD_VALID", "G2_EVIDENCE_VALID", "G3_CV_FACTCHECKED",
+         "G4_RENDER_VALID", "G5_DELIVERY_VALID")
+
+
+def evaluate_pipeline_gates(*, spec, inventory, matrix, ranked, report,
+                            artifact_findings, pages, pdf_ok, pdf_detail,
+                            rendered, rendered_missing) -> list[Gate]:
+    """Five gates that each answer a question a human would actually ask.
+
+    The previous set reported `JD_PARSED` as a FAILURE on a run that had already
+    parsed the JD and rendered a CV — the gate was measuring requirement count,
+    not parsing, and its name lied about what went wrong.
+    """
+    gates: list[Gate] = []
+
+    admission = getattr(spec, "admission", None)
+    if admission is not None and not admission.accepted:
+        gates.append(Gate("G1_JD_VALID", False,
+                          reason=admission.reason,
+                          diagnostic=f"kind={admission.kind} signals={admission.signals}",
+                          recoverable=True))
+    elif not spec.requirements:
+        gates.append(Gate("G1_JD_VALID", False,
+                          reason="no requirements could be extracted",
+                          diagnostic=f"title={spec.target_role!r}", recoverable=True))
+    else:
+        gates.append(Gate(
+            "G1_JD_VALID", True,
+            reason=f"{len(spec.requirements)} requirements "
+                   f"({len(spec.musts())} must-have)",
+            diagnostic=f"family={spec.primary_family} role={spec.target_role!r} "
+                       f"secondary={spec.secondary_domains[:4]}"))
+
+    evidence_ok = bool(inventory.records) and bool(matrix.matches) and bool(ranked)
+    gates.append(Gate(
+        "G2_EVIDENCE_VALID", evidence_ok,
+        reason=(f"{len(inventory.records)} experiences, "
+                f"{len(matrix.claimable())} requirements claimable, "
+                f"{len(matrix.gaps())} gap(s)") if evidence_ok
+               else "candidate evidence did not load or nothing ranked",
+        diagnostic="top: " + ", ".join(
+            f"{r.record.company}({r.band})"
+            for r in sorted(ranked, key=lambda r: -r.jd_score)[:4]),
+        recoverable=False))
+
+    fact_problems: list[str] = []
+    if report.unsupported_claims:
+        fact_problems.append("unsupported: " + ", ".join(
+            c.term for c in report.unsupported_claims))
+    if report.blocking_omissions:
+        fact_problems.append("omitted: " + ", ".join(
+            o.term for o in report.blocking_omissions))
+    if artifact_findings:
+        fact_problems.append("in rendered artifact: " + ", ".join(
+            f"{f.term}({f.kind})" for f in artifact_findings))
+    if not report.language_ok:
+        fact_problems.append(report.language_detail)
+    if not report.title_ok:
+        fact_problems.append(report.title_detail)
+    gates.append(Gate(
+        "G3_CV_FACTCHECKED", not fact_problems,
+        reason="every claim traces to canonical evidence" if not fact_problems
+               else "; ".join(fact_problems),
+        diagnostic=f"{round(rendered * 100)}% of claimable requirements rendered"
+                   + (f"; not rendered: {', '.join(rendered_missing[:6])}"
+                      if rendered_missing else ""),
+        recoverable=False))
+
+    render_ok = bool(pdf_ok) and pages is not None and pages <= 2
+    gates.append(Gate(
+        "G4_RENDER_VALID", render_ok,
+        reason=(f"{pages} page(s), structural checks passed" if render_ok
+                else f"pages={pages}; {pdf_detail}"),
+        diagnostic=pdf_detail, recoverable=True))
+
+    gates.append(Gate("G5_DELIVERY_VALID", True,
+                      reason="not attempted in this stage",
+                      diagnostic="set by the delivery adapter", recoverable=True))
+    return gates

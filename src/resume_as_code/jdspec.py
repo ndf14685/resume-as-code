@@ -38,6 +38,15 @@ DIMENSION_WEIGHT: dict[str, float] = {
     "networking": 0.80,
     "identity": 0.80,
     "security_governance": 0.80,
+    # Security-role dimensions. Without these a DevSecOps posting's hardest
+    # asks — SOC 2, PCI DSS, penetration testing, customer due diligence —
+    # were invisible to the parser, so they could not become gaps and the
+    # score could not fall. That is how Azumo reported "no gaps".
+    "compliance": 0.85,
+    "offensive_security": 0.80,
+    "vulnerability_management": 0.80,
+    "ai_security": 0.60,
+    "customer_security": 0.55,
     "backup_dr": 0.80,
     "containers": 0.70,
     "cicd": 0.70,
@@ -155,6 +164,60 @@ TERM_LEXICON: dict[str, tuple[str, str]] = {
     "devsecops": ("security_governance", "concept"),
     "hardening": ("security_governance", "concept"),
     "zero trust": ("security_governance", "concept"),
+    # ── compliance / audit frameworks ──────────────────────────────────────
+    "soc 2": ("compliance", "tool"),
+    "soc2": ("compliance", "tool"),
+    "pci dss": ("compliance", "tool"),
+    "pci-dss": ("compliance", "tool"),
+    "iso 27001": ("compliance", "tool"),
+    "hipaa": ("compliance", "tool"),
+    "gdpr": ("compliance", "tool"),
+    "nist": ("compliance", "tool"),
+    "audit preparation": ("compliance", "concept"),
+    "evidence collection": ("compliance", "concept"),
+    "risk assessment": ("compliance", "concept"),
+    "control validation": ("compliance", "concept"),
+    # ── offensive security ─────────────────────────────────────────────────
+    "penetration testing": ("offensive_security", "concept"),
+    "pentesting": ("offensive_security", "concept"),
+    "offensive security": ("offensive_security", "concept"),
+    "adversarial testing": ("offensive_security", "concept"),
+    "red team": ("offensive_security", "concept"),
+    "threat modeling": ("offensive_security", "concept"),
+    "burp suite": ("offensive_security", "tool"),
+    "metasploit": ("offensive_security", "tool"),
+    "nmap": ("offensive_security", "tool"),
+    # ── vulnerability management ───────────────────────────────────────────
+    "vulnerability management": ("vulnerability_management", "concept"),
+    "vulnerability scanning": ("vulnerability_management", "concept"),
+    "vulnerability remediation": ("vulnerability_management", "concept"),
+    "patch management": ("vulnerability_management", "concept"),
+    "dependency scanning": ("vulnerability_management", "concept"),
+    "snyk": ("vulnerability_management", "tool"),
+    "qualys": ("vulnerability_management", "tool"),
+    "nessus": ("vulnerability_management", "tool"),
+    "trivy": ("vulnerability_management", "tool"),
+    # ── AI security ────────────────────────────────────────────────────────
+    "prompt injection": ("ai_security", "concept"),
+    "adversarial inputs": ("ai_security", "concept"),
+    "guardrails": ("ai_security", "concept"),
+    "ai security": ("ai_security", "concept"),
+    "data leakage": ("ai_security", "concept"),
+    "responsible ai": ("ai_security", "concept"),
+    # ── customer-facing security ───────────────────────────────────────────
+    "due diligence": ("customer_security", "concept"),
+    "security questionnaire": ("customer_security", "concept"),
+    "security questionnaires": ("customer_security", "concept"),
+    "vendor risk": ("customer_security", "concept"),
+    "rfp": ("customer_security", "concept"),
+    # ── security operations ────────────────────────────────────────────────
+    "incident response": ("observability", "concept"),
+    "root cause analysis": ("observability", "concept"),
+    "siem": ("security_governance", "tool"),
+    "wazuh": ("security_governance", "tool"),
+    "secrets management": ("security_governance", "concept"),
+    "access control": ("identity", "concept"),
+    "least privilege": ("identity", "concept"),
     # ── backup / disaster recovery ─────────────────────────────────────────
     "veeam backup & replication": ("backup_dr", "tool"),
     "veeam backup and replication": ("backup_dr", "tool"),
@@ -295,6 +358,10 @@ SYNONYMS: dict[str, str] = {
     "bancario": "banking",
     "seguros": "insurance",
     "private endpoint": "private endpoints",
+    "soc2": "soc 2",
+    "pci-dss": "pci dss",
+    "pentesting": "penetration testing",
+    "security questionnaires": "security questionnaire",
 }
 
 
@@ -381,6 +448,56 @@ class Requirement:
         return self.priority == "must"
 
 
+# --------------------------------------------------------------------------- #
+# JD CLASSIFICATION — which discipline is this vacancy, and which are secondary.
+#
+# The title decides the family. Body keywords only decide the SECONDARY domains.
+# That ordering is the fix for the Azumo regression: a DevSecOps vacancy at an
+# AI company mentions AI in half its bullets, so body-keyword scoring ranked
+# `ai_systems` first and the CV headline became "Lead AI Systems". AI security
+# is a dimension of that role, not the profession.
+# --------------------------------------------------------------------------- #
+FAMILY_TITLE_PATTERNS: list[tuple[str, str]] = [
+    ("devsecops", r"devsecops|sec\s*dev\s*ops|security engineer|security solutions|"
+                  r"application security|appsec|product security|security lead"),
+    ("cloud_security", r"cloud security|security architect|infrastructure security"),
+    ("sre", r"\bsre\b|site reliability|reliability engineer"),
+    ("platform_engineering", r"platform engineer|infrastructure engineer|"
+                             r"developer platform"),
+    ("devops", r"devops|cloud engineer|cloud infrastructure"),
+    ("data_platforms", r"data engineer|data platform"),
+    ("ai_systems", r"\bai engineer|ml engineer|machine learning engineer|"
+                   r"llm engineer|agentic engineer"),
+    ("backend_engineering", r"backend engineer|back-end engineer|software engineer"),
+]
+
+# Secondary domains, detected in the body. These describe WHAT the role covers.
+DOMAIN_PATTERNS: list[tuple[str, str]] = [
+    ("cloud_security", r"cloud security|secure .{0,20}cloud|harden .{0,20}cloud"),
+    ("application_security", r"application security|appsec|secure development|"
+                             r"sast|sca|secure coding|api security"),
+    ("infrastructure_security", r"infrastructure security|system hardening|"
+                                r"harden(ing)? (?:cloud )?infrastructure"),
+    ("vulnerability_management", r"vulnerabilit|remediat|patch management"),
+    ("offensive_security", r"penetration testing|pentest|offensive security|"
+                           r"adversarial testing|red team"),
+    ("incident_response", r"incident response|incident|root cause analysis|"
+                          r"threat detection"),
+    ("ai_security", r"ai security|prompt injection|adversarial input|"
+                    r"ai[- ]driven system|ai system|guardrail"),
+    ("compliance", r"soc 2|soc2|pci dss|pci-dss|compliance|audit|regulator|"
+                   r"risk assessment"),
+    ("customer_security", r"due diligence|security questionnaire|\brfp\b|"
+                          r"vendor risk|customer .{0,15}security"),
+    ("identity", r"identity|access control|\biam\b|\brbac\b|sso"),
+    ("observability", r"monitoring|logging|alerting|observability"),
+    ("containers", r"kubernetes|\baks\b|\beks\b|docker|container"),
+    ("iac", r"terraform|infrastructure as code|\biac\b|bicep|ansible"),
+    ("cicd", r"ci/cd|cicd|pipeline|github actions|azure devops|jenkins|gitlab"),
+    ("cloud_platform", r"\baws\b|\bazure\b|\bgcp\b|google cloud"),
+]
+
+
 @dataclass
 class JobSpec:
     raw_title: str = ""
@@ -388,6 +505,13 @@ class JobSpec:
     seniority: Optional[str] = None
     requirements: list[Requirement] = field(default_factory=list)
     sections: dict[str, list[str]] = field(default_factory=dict)
+    # Classification. `target_role` is what the VACANCY is called and is never
+    # used as the candidate headline — see headline.resolve_candidate_headline.
+    target_role: str = ""
+    primary_family: str = ""
+    secondary_domains: list[str] = field(default_factory=list)
+    seniority_requested: list[str] = field(default_factory=list)
+    admission: Optional["Admission"] = None
 
     # -- convenience views ---------------------------------------------------
     def musts(self) -> list[Requirement]:
@@ -429,15 +553,59 @@ def clean_title(raw: str) -> str:
     return " ".join(s.split()[:8])
 
 
+# Portal boilerplate that occupies the first line and is not the role.
+_TITLE_BOILERPLATE = re.compile(
+    r"^(descripcion (?:completa )?(?:del )?(?:empleo|puesto|trabajo)|"
+    r"job description|about the job|about the role|descripcion general|"
+    r"detalles del empleo|job details|acerca del empleo|oferta de empleo)\b", re.I)
+
+# "Azumo is looking for a highly technical and hands-on DevSecOps Engineer /
+#  Security Solutions Lead to own and strengthen..." — the role lives mid
+# sentence. Capture the noun phrase ending in a role noun.
+_ROLE_NOUN = (r"engineer|developer|architect|consultant|specialist|analyst|"
+              r"administrator|manager|lead|scientist|designer|technician")
+_LOOKING_FOR = re.compile(
+    r"(?:looking for|hiring|seeking|in search of|buscamos|estamos buscando|"
+    r"nos encontramos buscando)\s+(?:an?\s+|una?\s+)?"
+    r"(?:[\w\-]+(?:\s+[\w\-]+){0,4}?\s+)??"
+    r"([A-Z][\w&/\-\.]*(?:\s+[\w&/\-\.]+){0,6}?"
+    rf"\s*(?:{_ROLE_NOUN})\b(?:\s*/\s*[\w&/\-\. ]{{0,40}}?(?:{_ROLE_NOUN})\b)?)",
+    re.I)
+
+
 def _extract_title(jd_text: str) -> tuple[str, str]:
-    for line in jd_text.splitlines():
-        s = line.strip().strip("#*_ ").strip()
-        if not s:
+    """Best-effort vacancy title.
+
+    Skips portal boilerplate ("Descripción completa del empleo") — taking it
+    literally is how the Azumo posting reported its target_role as that phrase
+    instead of "DevSecOps Engineer / Security Solutions Lead".
+    """
+    lines = [l.strip().strip("#*_ ").strip() for l in jd_text.splitlines()]
+    lines = [l for l in lines if l]
+
+    for line in lines[:6]:
+        m = re.match(r"(?:role|title|position|puesto|rol|cargo)\s*[:\-]\s*(.+)",
+                     line, re.I)
+        if m:
+            return m.group(1).strip(), clean_title(m.group(1))
+
+    # A "we are looking for <ROLE>" sentence beats a bare first line, because a
+    # posting that opens with boilerplate still names the role in prose.
+    m = _LOOKING_FOR.search(" ".join(lines[:12]))
+    if m:
+        # "highly technical and hands-on DevSecOps Engineer" -> the role starts
+        # at the first capitalised token; everything before it is adjectives.
+        words = m.group(1).split()
+        while len(words) > 2 and words[0][:1].islower():
+            words.pop(0)
+        raw = " ".join(words).strip()
+        return raw, clean_title(raw)
+
+    for line in lines[:6]:
+        if _TITLE_BOILERPLATE.match(line):
             continue
-        m = re.match(r"(?:role|title|position|puesto|rol|cargo)\s*[:\-]\s*(.+)", s, re.I)
-        raw = m.group(1) if m else s
-        return raw.strip(), clean_title(raw)
-    return "", ""
+        return line, clean_title(line)
+    return (lines[0], clean_title(lines[0])) if lines else ("", "")
 
 
 def _seniority(title: str, body: str) -> Optional[str]:
@@ -531,6 +699,8 @@ def parse_jd(jd_text: str) -> JobSpec:
                 existing.weight = round(weight, 4)
 
     spec.requirements = sorted(acc.values(), key=lambda r: (-r.weight, r.term))
+    classify_jd(jd_text, spec)
+    spec.admission = classify_admission(jd_text, len(spec.requirements))
     return spec
 
 
@@ -544,3 +714,130 @@ def requirement_label(req: Requirement) -> str:
 
 def iter_terms(reqs: Iterable[Requirement]) -> list[str]:
     return [r.term for r in reqs]
+
+
+# --------------------------------------------------------------------------- #
+# ADMISSION — is this text a job description at all?
+# --------------------------------------------------------------------------- #
+# The most damaging defect in production was that ANY Telegram message in the CV
+# topic was treated as a JD. "No me des respuestas a menos que te las pida"
+# (44 chars) became a job description, parsed to zero requirements, and surfaced
+# as "CV rechazado por quality gate: JD_PARSED". A 70-char complaint
+# ("me respondiste con uno de Lead Ai system??") parsed to ONE requirement,
+# scored 100% with no gaps, and delivered a PDF.
+#
+# A job description has shape: it is long, it enumerates requirements, and it
+# uses recruiting vocabulary. A control message does none of those.
+
+CONTROL_PATTERNS = (
+    r"^\s*no me (?:des|generes|mandes|contestes|respondas)",
+    r"^\s*no (?:generes|hagas|mandes)\b",
+    r"^\s*(?:dale|ok|okay|listo|gracias|perfecto|bien|si|no|yes)\s*[.!]?\s*$",
+    r"solo ayudame a responder",
+    r"no me generes cv",
+    r"me respondiste",
+    r"te ped[ií]\b",
+    r"^\s*(?:pero|entonces|por que|porque)\b.{0,120}\?\s*$",
+)
+
+# Vocabulary that only appears in an actual posting.
+JD_MARKERS = (
+    "responsibilities", "responsabilidades", "requirements", "requisitos",
+    "qualifications", "calificaciones", "what you", "we are looking",
+    "estamos buscando", "buscamos", "nice to have", "deseable", "deseables",
+    "years of experience", "anos de experiencia", "about the role",
+    "descripcion del puesto", "descripcion completa del empleo",
+    "job description", "key responsibilities", "beneficios", "benefits",
+    "we offer", "ofrecemos", "location:", "full-time", "part-time",
+    "seniority", "role overview", "who you are", "your profile",
+)
+
+MIN_JD_CHARS = 350
+MIN_JD_REQUIREMENTS = 6
+MIN_JD_MARKERS = 2
+
+
+@dataclass
+class Admission:
+    accepted: bool
+    reason: str
+    signals: dict = field(default_factory=dict)
+    kind: str = "unknown"     # job_description | control | conversation | too_short
+
+
+def classify_admission(jd_text: str, requirement_count: int) -> Admission:
+    """Decide whether `jd_text` is a job description worth generating a CV from."""
+    raw = (jd_text or "").strip()
+    norm = normalize(raw)
+    signals = {
+        "chars": len(raw),
+        "lines": len([l for l in raw.splitlines() if l.strip()]),
+        "requirements": requirement_count,
+        "markers": sorted({m for m in JD_MARKERS if m in norm}),
+    }
+
+    for pattern in CONTROL_PATTERNS:
+        if re.search(pattern, norm):
+            return Admission(False, "control message, not a job description",
+                             signals, "control")
+
+    if len(raw) < MIN_JD_CHARS:
+        return Admission(
+            False,
+            f"too short to be a job description: {len(raw)} chars < {MIN_JD_CHARS}",
+            signals, "too_short")
+
+    if len(signals["markers"]) < MIN_JD_MARKERS:
+        return Admission(
+            False,
+            "no job-posting vocabulary found (needs at least "
+            f"{MIN_JD_MARKERS} of responsibilities/requirements/qualifications/...)",
+            signals, "conversation")
+
+    if requirement_count < MIN_JD_REQUIREMENTS:
+        return Admission(
+            False,
+            f"only {requirement_count} requirement(s) extracted "
+            f"(< {MIN_JD_REQUIREMENTS}); a real posting enumerates more",
+            signals, "conversation")
+
+    return Admission(True, "job description", signals, "job_description")
+
+
+def classify_jd(jd_text: str, spec: "JobSpec") -> None:
+    """Fill target_role / primary_family / secondary_domains on `spec`."""
+    title_norm = normalize(spec.title or spec.raw_title)
+    body_norm = normalize(jd_text)
+
+    spec.target_role = (spec.title or spec.raw_title).strip()
+
+    # 1) Family from the TITLE. First match wins; the list is ordered so a
+    #    security title outranks a generic engineering one.
+    family = ""
+    for name, pattern in FAMILY_TITLE_PATTERNS:
+        if re.search(pattern, title_norm):
+            family = name
+            break
+    # 2) Only if the title says nothing, fall back to the body.
+    if not family:
+        for name, pattern in FAMILY_TITLE_PATTERNS:
+            if re.search(pattern, body_norm):
+                family = name
+                break
+    spec.primary_family = family or "devops"
+
+    # 3) Secondary domains from the body, ordered by first appearance.
+    found: list[tuple[int, str]] = []
+    for name, pattern in DOMAIN_PATTERNS:
+        m = re.search(pattern, body_norm)
+        if m and name != spec.primary_family:
+            found.append((m.start(), name))
+    spec.secondary_domains = [n for _, n in sorted(found)]
+
+    # 4) Every seniority token the vacancy asks for. Recorded, never granted.
+    asked: list[str] = []
+    scope = f"{title_norm} {normalize(spec.raw_title)}"
+    for token, level in _SENIORITY_TOKENS:
+        if token in scope and level not in asked:
+            asked.append(level)
+    spec.seniority_requested = asked

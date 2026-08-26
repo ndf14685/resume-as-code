@@ -79,6 +79,9 @@ class ComposedPlan:
     condense: set[str] = field(default_factory=set)        # exp ids shown as one line
     include_projects: list[str] = field(default_factory=list)
     profile_name: str = "role-driven"
+    # How the headline was decided, for the debug artifact. Empty on the legacy
+    # template path, which does not resolve a candidate headline.
+    headline_audit: dict = field(default_factory=dict)
 
 
 def _clean_title(raw: str) -> str:

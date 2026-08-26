@@ -62,6 +62,13 @@ _TERM_DISPLAY = {
     "openshift": "OpenShift", "argocd": "ArgoCD", "rhel": "RHEL",
     "azure openai": "Azure OpenAI", "azure ai studio": "Azure AI Studio",
     "azure monitor": "Azure Monitor", "azure devops": "Azure DevOps",
+    # Security vocabulary. Title-casing these produced "Devsecops", "Soc 2" and
+    # "Pci Dss" in a professional document and in the Telegram caption.
+    "devsecops": "DevSecOps", "devops": "DevOps", "sre": "SRE",
+    "soc 2": "SOC 2", "pci dss": "PCI DSS", "iso 27001": "ISO 27001",
+    "hipaa": "HIPAA", "gdpr": "GDPR", "nist": "NIST", "siem": "SIEM",
+    "ci/cd": "CI/CD", "api security": "API Security",
+    "secure sdlc": "Secure SDLC", "ai security": "AI Security",
 }
 
 _DIMENSION_LABEL = {
@@ -89,6 +96,22 @@ def display_term(match) -> str:
 # --------------------------------------------------------------------------- #
 # 6. Target title
 # --------------------------------------------------------------------------- #
+def compose_candidate_title(spec: JobSpec, matrix: MatchMatrix,
+                            inventory: EvidenceInventory,
+                            bundle: DataBundle = None) -> tuple[str, str, object]:
+    """The CV headline. Delegates to the one canonical resolver.
+
+    The old `compose_target_title` derived the headline from the JD: it took
+    the vacancy's seniority token and a role-family LABEL, which is how
+    "DevSecOps Engineer / Security Solutions Lead" became "Lead AI Systems".
+    """
+    from .headline import resolve_candidate_headline
+    resolved = resolve_candidate_headline(spec=spec, inventory=inventory,
+                                          matrix=matrix, bundle=bundle)
+    head, _, spec_part = resolved.headline.partition(" | ")
+    return head.strip(), spec_part.strip(), resolved
+
+
 def compose_target_title(spec: JobSpec, intent: RoleIntent, matrix: MatchMatrix,
                          bundle: DataBundle) -> tuple[str, str]:
     """A natural professional title = real profile + target of the search.
@@ -164,7 +187,9 @@ def compose_evidence_summary(bundle: DataBundle, spec: JobSpec, matrix: MatchMat
         top = industries[:3]
         industry_str = (", ".join(top[:-1]) + " and " + top[-1]) if len(top) > 1 else top[0]
 
-    lead = f"{headline} with {years}+ years" if years >= 3 else headline
+    # "13+ years" is true of a technology career and false of DevSecOps
+    # specifically — the first decade was Java/SOA. Say which one.
+    lead = f"{headline} with {years}+ years in technology" if years >= 3 else headline
     if industry_str:
         lead += f" across {industry_str.lower()}"
     parts.append(lead.rstrip(".") + ".")
@@ -173,17 +198,25 @@ def compose_evidence_summary(bundle: DataBundle, spec: JobSpec, matrix: MatchMat
     ranked_claims = claim_ranking(matrix)
     labels: list[str] = []
     used_dimensions: set[str] = set()
+    headline_words = {w.lower() for w in headline.replace("|", " ").split()}
     for m in ranked_claims:
         if m.requirement.dimension in used_dimensions:
             continue
         label = display_term(m)
         if label in labels:
             continue
+        # Do not repeat what the headline already says: "Senior DevSecOps
+        # Engineer ... hands-on across DevSecOps" reads like filler.
+        if label.lower() in headline_words:
+            continue
         used_dimensions.add(m.requirement.dimension)
         labels.append(label)
         if len(labels) >= 4:
             break
     if labels:
+        # A CV describes the candidate. It never narrates its own generation:
+        # "Matched to this search on ..." told the reader a machine wrote this
+        # for a specific ad, which is both unprofessional and a tell.
         anchor = ranked_claims[0]
         exp_labels: list[str] = []
         for exp_id in anchor.experience_ids:
@@ -192,10 +225,9 @@ def compose_evidence_summary(bundle: DataBundle, spec: JobSpec, matrix: MatchMat
                 exp_labels.append(rec.short_label)
         claim_str = (", ".join(labels[:-1]) + " and " + labels[-1]) if len(labels) > 1 \
             else labels[0]
-        sentence = f"Matched to this search on {claim_str}"
+        sentence = f"Hands-on across {claim_str}"
         if exp_labels:
-            where = ", ".join(exp_labels[:3])
-            sentence += f", evidenced at {where}"
+            sentence += f", delivered at {', '.join(exp_labels[:3])}"
         parts.append(sentence + ".")
 
     # Sentence 3: the strongest non-JD differentiator that is real.
@@ -278,7 +310,7 @@ class EvidencePlan:
 def compose_from_evidence(bundle: DataBundle, spec: JobSpec, intent: RoleIntent,
                           matrix: MatchMatrix, inventory: EvidenceInventory,
                           ranked: list[RankedExperience]) -> ComposedPlan:
-    headline, tagline = compose_target_title(spec, intent, matrix, bundle)
+    headline, tagline, resolved = compose_candidate_title(spec, matrix, inventory, bundle)
     summary = compose_evidence_summary(bundle, spec, matrix, inventory,
                                        headline, ranked)
     skill_priority = compose_skill_priority(bundle, spec, matrix, inventory)
@@ -300,9 +332,11 @@ def compose_from_evidence(bundle: DataBundle, spec: JobSpec, intent: RoleIntent,
     include = ["nexusos"] if intent_wants_ai(spec) or \
         spec.dimension_weights().get("other", 0) >= 0.5 else []
 
-    return ComposedPlan(
+    plan = ComposedPlan(
         headline=headline, tagline=tagline, summary=summary,
         skill_priority=skill_priority, emphasis_tags=emphasis,
         expand=expand, condense=condense, include_projects=include,
-        profile_name=f"role:{intent.primary_role}",
+        profile_name=f"role:{spec.primary_family or intent.primary_role}",
     )
+    plan.headline_audit = resolved.audit()
+    return plan
