@@ -69,6 +69,17 @@ _TERM_DISPLAY = {
     "hipaa": "HIPAA", "gdpr": "GDPR", "nist": "NIST", "siem": "SIEM",
     "ci/cd": "CI/CD", "api security": "API Security",
     "secure sdlc": "Secure SDLC", "ai security": "AI Security",
+    # Governance vocabulary. Title-casing produced "Llm", "Iso 42001",
+    # "Nist Ai Rmf" and "Owasp Llm Top 10" in a professional document and in
+    # the Telegram gap report.
+    "llm": "LLMs", "generative ai": "Generative AI",
+    "ai governance": "AI Governance", "grc": "GRC",
+    "agentic systems": "Agentic Systems", "guardrails": "Guardrails",
+    "auditability": "Auditability", "traceability": "Traceability",
+    "nist ai rmf": "NIST AI RMF", "iso 42001": "ISO/IEC 42001",
+    "eu ai act": "EU AI Act", "owasp llm top 10": "OWASP LLM Top 10",
+    "nist csf": "NIST CSF", "cism": "CISM", "cissp": "CISSP",
+    "crisc": "CRISC", "bcra": "BCRA", "bcu": "BCU", "sbs": "SBS", "cmf": "CMF",
 }
 
 _DIMENSION_LABEL = {
@@ -195,19 +206,45 @@ def compose_evidence_summary(bundle: DataBundle, spec: JobSpec, matrix: MatchMat
     parts.append(lead.rstrip(".") + ".")
 
     # Sentence 2: what this JD asked for and where the evidence lives.
-    ranked_claims = claim_ranking(matrix)
+    # Order the claims by how central their DOMAIN is to this vacancy, so the
+    # first line of the summary reads as the JD's subject rather than as the
+    # candidate's most-repeated tool.
+    ranked_claims = sorted(
+        claim_ranking(matrix),
+        key=lambda m: (-spec.domain_rank(m.requirement.dimension),
+                       0 if m.requirement.is_must else 1,
+                       0 if m.requirement.kind == "tool" else 1,
+                       -(m.requirement.weight * (1 + 0.3 * m.requirement.mentions))))
     labels: list[str] = []
     used_dimensions: set[str] = set()
     headline_words = {w.lower() for w in headline.replace("|", " ").split()}
-    for m in ranked_claims:
-        if m.requirement.dimension in used_dimensions:
+    # The opening lines belong to the vacancy's subject matter. Peripheral
+    # evidence is admitted only if the centre does not fill the sentence —
+    # otherwise a governance CV opens with "AI Governance, AWS, Release
+    # Automation", which reads as a tool list, not a professional summary.
+    central = [m for m in ranked_claims
+               if spec.domain_rank(m.requirement.dimension) >= 0.7]
+    pool = central if len(central) >= 3 else ranked_claims
+    for m in pool:
+        # One claim per dimension keeps the sentence broad — until breadth is
+        # not available, at which point depth in the JD's own subject beats a
+        # one-item list.
+        if m.requirement.dimension in used_dimensions and len(labels) >= 3:
+            continue
+        if (m.requirement.dimension in used_dimensions
+                and spec.domain_rank(m.requirement.dimension) < 1.0):
             continue
         label = display_term(m)
+        low = label.lower()
         if label in labels:
             continue
         # Do not repeat what the headline already says: "Senior DevSecOps
         # Engineer ... hands-on across DevSecOps" reads like filler.
-        if label.lower() in headline_words:
+        if low in headline_words:
+            continue
+        # Nor a narrower/wider form of something already listed: "AI Governance,
+        # Governance" reads as a machine emitting synonyms.
+        if any(low in c.lower() or c.lower() in low for c in labels):
             continue
         used_dimensions.add(m.requirement.dimension)
         labels.append(label)
@@ -230,6 +267,19 @@ def compose_evidence_summary(bundle: DataBundle, spec: JobSpec, matrix: MatchMat
             sentence += f", delivered at {', '.join(exp_labels[:3])}"
         parts.append(sentence + ".")
 
+    # Banking/regulated domain evidence, when the vacancy asks for it. This is
+    # BANKING_DOMAIN_EVIDENCE and stays that: having worked at four banks is not
+    # experience interacting with a regulator, and is never phrased as if it is.
+    if spec.domain_rank("domain") >= 0.4 or spec.domain_rank("compliance") >= 0.4:
+        banks = list(dict.fromkeys(
+            rec.company for rec in inventory.records
+            if (rec.industry or "").lower().startswith(("banking", "financial"))))
+        if len(banks) >= 2:
+            shown = [b.split(" (")[0] for b in banks[:3]]
+            more = f" and {len(banks) - 3} more" if len(banks) > 3 else ""
+            parts.append("Delivered inside regulated financial environments at "
+                         f"{', '.join(shown)}{more}.")
+
     # Sentence 3: the strongest non-JD differentiator that is real.
     if intent_wants_ai(spec):
         parts.append("Creator of NexusOS, a governed execution platform for "
@@ -246,6 +296,34 @@ def compose_evidence_summary(bundle: DataBundle, spec: JobSpec, matrix: MatchMat
     return summary
 
 
+def _relevant_projects(bundle: DataBundle, spec: JobSpec, matrix: MatchMatrix,
+                       inventory: EvidenceInventory) -> list[str]:
+    """Promote an independent project when it is strong evidence for THIS JD.
+
+    NexusOS carries the candidate's only AI-governance evidence — capability
+    authorization, policy enforcement, auditability, human-in-the-loop, prompt
+    injection mitigation. On an AI-governance vacancy that is the most relevant
+    evidence in the dataset, and it was appearing as one generic line in the
+    summary. Selection is by evidence, not by a hardcoded family check.
+    """
+    from .inventory import CATEGORY_DIMENSION
+    catalog = bundle.skills
+    chosen: list[str] = []
+    for project in bundle.projects:
+        rank = 0.0
+        for skill in project.skills:
+            dimension = CATEGORY_DIMENSION.get(catalog.category_of(skill) or "",
+                                               "other")
+            rank = max(rank, spec.domain_rank(dimension))
+        claims = sum(1 for m in matrix.claimable()
+                     if any(s in project.skills for s in m.evidence))
+        # Either the project sits in the JD's centre, or it answers several of
+        # the JD's own requirements.
+        if rank >= 0.7 or claims >= 3:
+            chosen.append(project.id)
+    return chosen
+
+
 def intent_wants_ai(spec: JobSpec) -> bool:
     return spec.dimension_weights().get("ai", 0.0) >= 0.05
 
@@ -253,6 +331,57 @@ def intent_wants_ai(spec: JobSpec) -> bool:
 # --------------------------------------------------------------------------- #
 # 8. Skill ordering driven by JD relevance (evidenced skills only)
 # --------------------------------------------------------------------------- #
+def compose_skill_selection(bundle: DataBundle, spec: JobSpec,
+                            matrix: MatchMatrix, inventory: EvidenceInventory
+                            ) -> tuple[list[str], set[str], dict]:
+    """Which skills to show, and in what order.
+
+    Returns (category order, skills to drop, the per-skill ranking for audit).
+
+    The previous version ordered categories and showed every evidenced skill in
+    each. On an AI-governance vacancy that put Cloud Platforms and Platform &
+    Architecture above AI Systems & Governance, and spent lines on CloudFront,
+    RDS, DataPower, WebSphere and BrowserStack — all true, none of it what the
+    reader is looking for.
+    """
+    from .matching import TIER_OMIT, TIER_PRIMARY, TIER_SECONDARY, rank_skills
+    catalog = bundle.skills
+    ranked = rank_skills(spec, matrix, inventory, catalog)
+
+    # Category order: the strongest skill it contains, then its depth.
+    per_category: dict[str, list[dict]] = {}
+    for detail in ranked.values():
+        if detail["category"]:
+            per_category.setdefault(detail["category"], []).append(detail)
+
+    from .inventory import CATEGORY_DIMENSION
+
+    def category_key(item):
+        category, details = item
+        dimension = CATEGORY_DIMENSION.get(category, "other")
+        centrality = spec.domain_rank(dimension)
+        best = max(d["score"] for d in details)
+        kept = [d for d in details if d["tier"] != TIER_OMIT]
+        # Squared centrality: the gap between "this is what the job is about"
+        # and "this is adjacent" should dominate, while still letting a strong
+        # match order categories within the same tier.
+        return (-(centrality ** 2) * (0.3 + best), -best, -len(kept))
+
+    ordered = [c for c, _ in sorted(per_category.items(), key=category_key)]
+
+    dropped = {d["skill"] for d in ranked.values() if d["tier"] == TIER_OMIT}
+    # Never empty a category to nothing: if every one of its skills scored into
+    # OMIT, the category simply disappears, which is the intended outcome.
+    kept = sum(1 for d in ranked.values() if d["tier"] != TIER_OMIT)
+    if kept < 8:
+        # Degenerate JD (very few requirements): fall back to showing more
+        # rather than shipping a CV with three skills on it.
+        dropped = {d["skill"] for d in ranked.values()
+                   if d["tier"] == TIER_OMIT and d["semantic"] <= 0.1
+                   and not d["matched"]}
+    return ordered, dropped, ranked
+
+
 def compose_skill_priority(bundle: DataBundle, spec: JobSpec, matrix: MatchMatrix,
                            inventory: EvidenceInventory) -> list[str]:
     catalog = bundle.skills
@@ -313,7 +442,8 @@ def compose_from_evidence(bundle: DataBundle, spec: JobSpec, intent: RoleIntent,
     headline, tagline, resolved = compose_candidate_title(spec, matrix, inventory, bundle)
     summary = compose_evidence_summary(bundle, spec, matrix, inventory,
                                        headline, ranked)
-    skill_priority = compose_skill_priority(bundle, spec, matrix, inventory)
+    skill_priority, dropped_skills, skill_ranking = compose_skill_selection(
+        bundle, spec, matrix, inventory)
 
     emphasis: list[str] = []
     for f in intent.top_families(3):
@@ -329,8 +459,7 @@ def compose_from_evidence(bundle: DataBundle, spec: JobSpec, intent: RoleIntent,
         else:
             condense.add(r.record.id)
 
-    include = ["nexusos"] if intent_wants_ai(spec) or \
-        spec.dimension_weights().get("other", 0) >= 0.5 else []
+    include = _relevant_projects(bundle, spec, matrix, inventory)
 
     plan = ComposedPlan(
         headline=headline, tagline=tagline, summary=summary,
@@ -339,4 +468,6 @@ def compose_from_evidence(bundle: DataBundle, spec: JobSpec, intent: RoleIntent,
         profile_name=f"role:{spec.primary_family or intent.primary_role}",
     )
     plan.headline_audit = resolved.audit()
+    plan.dropped_skills = dropped_skills
+    plan.skill_ranking = skill_ranking
     return plan

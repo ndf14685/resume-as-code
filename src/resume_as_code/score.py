@@ -135,7 +135,7 @@ def _matrix_keyword_report(matrix, cv_text: str) -> KeywordReport:
 def evaluate(pdf_path: str | Path, *, jd_text: str, bundle: DataBundle,
              intent: RoleIntent, data_dir: str | Path = "data",
              min_ats: float = 8.5, min_recruiter: float = 8.0,
-             matrix=None) -> QualityReport:
+             matrix=None, headline: str = "") -> QualityReport:
     """`matrix` is the JD↔evidence MatchMatrix. When supplied it replaces the
     keyword-dictionary coverage with the real weighted must-have coverage —
     requirements with NO evidence stay in the denominator instead of being
@@ -157,8 +157,13 @@ def evaluate(pdf_path: str | Path, *, jd_text: str, bundle: DataBundle,
     docx_check = checks.get("no layout tables (DOCX)")
     docx_parse_ok = bool(docx_check.ok) if docx_check else True
 
-    # identity: the composed headline noun must be recoverable from the text
-    identity_ok = intent.job_title.split()[0].lower() in cv_text.lower() if intent.job_title else True
+    # Identity: the CANDIDATE's headline must be recoverable from the rendered
+    # text. Checking the vacancy's title here was a leftover from when the two
+    # were the same string, and it now fails precisely when the CV is right.
+    identity_ok = True
+    if headline:
+        first = headline.split()[0].lower()
+        identity_ok = first in cv_text.lower()
 
     must_have = matrix.coverage(musts_only=True) if matrix is not None else kr.coverage()
     supported = kr.coverage()

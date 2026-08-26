@@ -57,6 +57,20 @@ ADJACENT_EVIDENCE: dict[str, list[str]] = {
     "databricks": ["Google Dataflow", "Apache Airflow"],
 }
 
+# Named frameworks, standards, regulators and certifications. Generic evidence
+# never satisfies one of these, however semantically close it looks. Running an
+# AI governance pipeline is not experience with NIST AI RMF; working at banks is
+# not interaction with the BCRA; enforcing policy is not ISO 42001. Resolution
+# skips straight to the gap classifier for these terms.
+SPECIFIC_FRAMEWORKS = frozenset({
+    "nist ai rmf", "iso 42001", "iso/iec 42001", "eu ai act",
+    "owasp llm top 10", "nist csf", "iso 27001", "soc 2", "pci dss",
+    "hipaa", "gdpr", "nist", "bcra", "bcu", "sbs", "cmf",
+    "cism", "cissp", "crisc", "ccsp", "oscp", "ceh",
+    "az-104", "az-305", "az-700", "az-400", "vmce", "cka", "ckad",
+    "aws security", "aws certified", "certifications", "certificaciones",
+})
+
 CAN_CLAIM_YES = "YES"
 CAN_CLAIM_PARTIAL = "PARTIAL"
 CAN_CLAIM_NO = "NO"
@@ -173,6 +187,25 @@ def build_match_matrix(spec: JobSpec, bundle: DataBundle,
 
     for req in spec.requirements:
         term_norm = normalize(req.term)
+
+        # 0) A named framework/standard/certification is claimable only from an
+        #    explicit record of it. No alias, no text match, no adjacency.
+        if term_norm in SPECIFIC_FRAMEWORKS:
+            credential = any(
+                term_present(req.term, c) for c in inventory.credential_terms)
+            if credential:
+                matrix.matches.append(RequirementMatch(
+                    requirement=req, can_claim=CAN_CLAIM_YES, confidence=1.0,
+                    evidence=[f"credential:{req.term}"], experience_ids=[],
+                    source="confirmed credential record",
+                    note="named framework backed by a confirmed credential"))
+            else:
+                matrix.matches.append(RequirementMatch(
+                    requirement=req, can_claim=CAN_CLAIM_NO, confidence=0.0,
+                    evidence=[], experience_ids=[], source="named framework",
+                    note="named standard/certification: only an explicit record "
+                         "counts; adjacent governance work does not"))
+            continue
 
         # 1) Direct canonical-skill evidence (strongest).
         canonical = alias_index.get(term_norm)
@@ -456,18 +489,25 @@ def select_bullets(rec: EvidenceRecord, spec: JobSpec, matrix: MatchMatrix,
     """
     if limit <= 0:
         return []
-    claimable_terms = [(m.term, m.requirement.weight, m.requirement.is_must)
+    # A bullet earns its place by answering the JD, weighted by how central the
+    # requirement's DOMAIN is. Ranking on requirement weight alone put the
+    # AWS/EKS bullet above the generative-AI governance bullet on an
+    # AI-governance vacancy: both are must-haves, only one is the subject.
+    claimable_terms = [(m.term, m.requirement.weight, m.requirement.is_must,
+                        spec.domain_rank(m.requirement.dimension))
                        for m in matrix.claimable()]
     scored: list[tuple[float, int, str]] = []
     for b in rec.bullets:
         score = 0.0
-        for term, weight, is_must in claimable_terms:
+        for term, weight, is_must, domain_rank in claimable_terms:
             if term_present(term, b["norm"]):
-                score += weight * (3.0 if is_must else 1.2)
+                score += weight * (3.0 if is_must else 1.2) * (0.4 + domain_rank)
         score += 0.4 * len(set(b["tags"]) & emphasis)
         scored.append((score, b["idx"], b["text"]))
     top = sorted(scored, key=lambda t: (-t[0], t[1]))[:limit]
-    return [text for _, _, text in sorted(top, key=lambda t: t[1])]
+    # Ordered by relevance, ties broken by document order. The most relevant
+    # thing this role did for THIS vacancy is the first thing the reader sees.
+    return [text for _, _, text in top]
 
 
 def rendered_coverage(matrix: MatchMatrix, cv_text: str) -> tuple[float, list[str]]:
@@ -652,3 +692,90 @@ def render_match_breakdown(breakdown: dict) -> str:
               f"Recomputed from contributions: "
               f"{breakdown['recomputedScore'] * 100:.1f}%"]
     return "\n".join(lines)
+
+
+# --------------------------------------------------------------------------- #
+# SKILL RELEVANCE — what belongs on THIS CV, and how prominently
+# --------------------------------------------------------------------------- #
+# A CV is not an inventory. Every skill in the catalogue is true, but a CV for
+# an AI-governance role that spends a third of its skills block on CloudFront,
+# DataPower, WebSphere and BrowserStack is a worse CV than one that omits them.
+TIER_PRIMARY = "PRIMARY"
+TIER_SECONDARY = "SECONDARY"
+TIER_SUPPORTING = "SUPPORTING"
+TIER_OMIT = "OMIT"
+
+
+def skill_relevance(skill: str, *, spec, matrix: MatchMatrix,
+                    inventory: EvidenceInventory, catalog) -> tuple[float, dict]:
+    """relevance = JD semantic relevance x evidence strength x target importance.
+
+    * semantic relevance — where the skill's dimension sits in the JD's centre
+      of gravity.
+    * evidence strength — how many real engagements back it.
+    * target importance — does it answer a requirement the JD actually made,
+      and how central was that requirement. This is the term that keeps Azure
+      at the top of an Azure vacancy even when the parser's heaviest dimension
+      is networking: the requirement is named, must-have and repeated.
+    """
+    from .inventory import CATEGORY_DIMENSION
+    category = catalog.category_of(skill) or ""
+    dimension = CATEGORY_DIMENSION.get(category, "other")
+    semantic = spec.domain_rank(dimension)
+
+    ids = [i for i in inventory.ids_with_skill(skill) if not i.startswith("project:")]
+    projects = [i for i in inventory.ids_with_skill(skill) if i.startswith("project:")]
+    evidence = min(1.0, 0.35 + 0.2 * len(ids) + (0.25 if projects else 0.0))
+
+    importance = 0.25
+    matched_terms: list[str] = []
+    for m in matrix.claimable():
+        if skill not in m.evidence:
+            continue
+        matched_terms.append(m.term)
+        weight = m.requirement.weight * (1 + 0.3 * min(m.requirement.mentions, 6))
+        importance = max(importance, min(1.6, weight))
+        # A skill that answers a requirement inherits that requirement's
+        # centrality. Terraform is not "IaC trivia" on a vacancy whose centre is
+        # IaC, and AI Governance is not peripheral on a governance vacancy just
+        # because the catalogue files it under a different category name.
+        semantic = max(semantic, spec.domain_rank(m.requirement.dimension))
+
+    score = semantic * evidence * importance
+    return round(score, 5), {
+        "skill": skill, "category": category, "dimension": dimension,
+        "semantic": semantic, "evidence": round(evidence, 3),
+        "importance": round(importance, 3), "matched": matched_terms,
+        "experiences": len(ids),
+    }
+
+
+def rank_skills(spec, matrix: MatchMatrix, inventory: EvidenceInventory,
+                catalog) -> dict[str, dict]:
+    """Score every evidenced skill and assign it a tier."""
+    scored: dict[str, dict] = {}
+    for skill in inventory.skill_evidence:
+        score, detail = skill_relevance(skill, spec=spec, matrix=matrix,
+                                        inventory=inventory, catalog=catalog)
+        detail["score"] = score
+        scored[skill] = detail
+    if not scored:
+        return scored
+
+    ordered = sorted(scored.values(), key=lambda d: -d["score"])
+    top = ordered[0]["score"] or 1.0
+    for detail in ordered:
+        ratio = detail["score"] / top
+        central = detail["semantic"] >= 0.7      # primary or secondary domain
+        if ratio >= 0.55 or (central and detail["matched"]):
+            detail["tier"] = TIER_PRIMARY
+        elif central or ratio >= 0.22 or detail["matched"]:
+            # A skill inside the vacancy's subject matter is worth showing even
+            # if the JD never named that exact tool: it is the depth a reader is
+            # scanning for.
+            detail["tier"] = TIER_SECONDARY
+        elif ratio >= 0.06:
+            detail["tier"] = TIER_SUPPORTING
+        else:
+            detail["tier"] = TIER_OMIT
+    return scored

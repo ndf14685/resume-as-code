@@ -66,6 +66,7 @@ def _skill_groups(
     bundle: DataBundle,
     priority: list[str],
     matched: set[str],
+    dropped: Optional[set[str]] = None,
 ) -> list[SkillGroup]:
     """Build ordered skill groups from evidenced skills only.
 
@@ -77,9 +78,12 @@ def _skill_groups(
     catalog = bundle.skills
 
     # category_id -> list of (skill_name)
+    drop = dropped or set()
     by_cat: dict[str, list[str]] = {}
     for name in catalog.all_names():
-        if name in evidence:  # only skills actually used
+        # Evidenced AND worth the space. `drop` carries the OMIT tier: a CV
+        # that lists every true skill is an inventory, not a tailored document.
+        if name in evidence and name not in drop:
             cat = catalog.category_of(name)
             by_cat.setdefault(cat, []).append(name)
 
@@ -239,7 +243,8 @@ def build_from_plan(
         email=bundle.basics.email,
         links=_format_links(bundle),
         summary=plan.summary,
-        skill_groups=_skill_groups(bundle, plan.skill_priority, matched),
+        skill_groups=_skill_groups(bundle, plan.skill_priority, matched,
+                                   getattr(plan, "dropped_skills", None)),
         experiences=experiences,
         featured_projects=featured,
         certifications=bundle.certifications,

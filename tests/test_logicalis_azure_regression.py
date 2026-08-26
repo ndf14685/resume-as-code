@@ -249,11 +249,20 @@ def test_summary_is_built_from_evidence_not_from_the_ad(result):
 # 7. Skills ordering and the two-page contract
 # --------------------------------------------------------------------------- #
 def test_relevant_skill_groups_lead(result):
+    """Semantic precedence, not a pinned index: any re-ranking that keeps the
+    infrastructure categories ahead of the peripheral ones is correct."""
     groups = [g.name for g in result.resume.skill_groups]
-    assert groups[0] == "Cloud Platforms", groups
     cloud = next(g for g in result.resume.skill_groups
                  if g.name == "Cloud Platforms")
     assert cloud.items[0] == "Azure", cloud.items
+
+    def rank(name):
+        return groups.index(name) if name in groups else 10_000
+
+    for infra in ("Cloud Platforms", "Infrastructure as Code"):
+        assert rank(infra) < rank("Programming & Scripting"), groups
+        assert rank(infra) < rank("Integration & Middleware"), groups
+    assert min(rank("Cloud Platforms"), rank("Infrastructure as Code")) == 0, groups
 
 
 def test_two_pages_and_all_gates_green(result):

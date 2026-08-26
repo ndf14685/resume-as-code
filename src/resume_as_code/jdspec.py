@@ -42,6 +42,9 @@ DIMENSION_WEIGHT: dict[str, float] = {
     # asks — SOC 2, PCI DSS, penetration testing, customer due diligence —
     # were invisible to the parser, so they could not become gaps and the
     # score could not fall. That is how Azumo reported "no gaps".
+    "ai_governance": 0.95,
+    "grc": 0.85,
+    "risk_management": 0.80,
     "compliance": 0.85,
     "offensive_security": 0.80,
     "vulnerability_management": 0.80,
@@ -164,6 +167,77 @@ TERM_LEXICON: dict[str, tuple[str, str]] = {
     "devsecops": ("security_governance", "concept"),
     "hardening": ("security_governance", "concept"),
     "zero trust": ("security_governance", "concept"),
+    # ── AI governance ──────────────────────────────────────────────────────
+    # A governance vacancy is written in the language of control, not of tools.
+    # Without these terms the parser saw only "AWS" and "APIs" and produced a
+    # DevOps CV for an AI-governance role.
+    "ai governance": ("ai_governance", "concept"),
+    "gobierno de ia": ("ai_governance", "concept"),
+    "gobernanza de ia": ("ai_governance", "concept"),
+    "modelo de gobernanza": ("ai_governance", "concept"),
+    "marco de gobierno": ("ai_governance", "concept"),
+    "responsible ai": ("ai_governance", "concept"),
+    "ia responsable": ("ai_governance", "concept"),
+    "guardrails": ("ai_governance", "concept"),
+    "casos de uso de ia": ("ai_governance", "concept"),
+    "sistemas agenticos": ("ai_governance", "concept"),
+    "agentic systems": ("ai_governance", "concept"),
+    "copilotos": ("ai_governance", "concept"),
+    "copilots": ("ai_governance", "concept"),
+    "trazabilidad": ("ai_governance", "concept"),
+    "traceability": ("ai_governance", "concept"),
+    "auditabilidad": ("ai_governance", "concept"),
+    "auditability": ("ai_governance", "concept"),
+    "evidencia auditable": ("ai_governance", "concept"),
+    "aprobacion de casos de uso": ("ai_governance", "concept"),
+    "clasificacion de riesgo": ("risk_management", "concept"),
+    "genai": ("ai_governance", "concept"),
+    "generative ai": ("ai_governance", "concept"),
+    "ia generativa": ("ai_governance", "concept"),
+    "llms": ("ai_governance", "concept"),
+    "llm": ("ai_governance", "concept"),
+    # ── specific frameworks. NEVER satisfiable by generic governance work ───
+    "nist ai rmf": ("ai_governance", "tool"),
+    "iso/iec 42001": ("ai_governance", "tool"),
+    "iso 42001": ("ai_governance", "tool"),
+    "eu ai act": ("ai_governance", "tool"),
+    "owasp llm top 10": ("ai_governance", "tool"),
+    "nist csf": ("security_governance", "tool"),
+    # ── GRC / risk ─────────────────────────────────────────────────────────
+    "grc": ("grc", "concept"),
+    "control interno": ("grc", "concept"),
+    "internal control": ("grc", "concept"),
+    "segregacion de funciones": ("grc", "concept"),
+    "segregation of duties": ("grc", "concept"),
+    "matriz de riesgo": ("risk_management", "concept"),
+    "risk matrix": ("risk_management", "concept"),
+    "gestion de riesgos": ("risk_management", "concept"),
+    "riesgo tecnologico": ("risk_management", "concept"),
+    "auditoria it": ("grc", "concept"),
+    "auditoria": ("grc", "concept"),
+    "politicas": ("grc", "concept"),
+    "estandares": ("grc", "concept"),
+    "procedimientos": ("grc", "concept"),
+    "cumplimiento regulatorio": ("compliance", "concept"),
+    "regulatory compliance": ("compliance", "concept"),
+    "entornos regulados": ("domain", "concept"),
+    "regulated environments": ("domain", "concept"),
+    "fintech": ("domain", "concept"),
+    "medios de pago": ("domain", "concept"),
+    "servicios financieros": ("domain", "concept"),
+    "financial services": ("domain", "concept"),
+    "privacidad": ("compliance", "concept"),
+    "proteccion de datos": ("compliance", "concept"),
+    "data privacy": ("compliance", "concept"),
+    # ── regulators / certifications (specific, never inferred) ─────────────
+    "bcra": ("compliance", "tool"),
+    "bcu": ("compliance", "tool"),
+    "sbs": ("compliance", "tool"),
+    "cmf": ("compliance", "tool"),
+    "cism": ("certification", "tool"),
+    "cissp": ("certification", "tool"),
+    "crisc": ("certification", "tool"),
+    "aws security": ("certification", "tool"),
     # ── compliance / audit frameworks ──────────────────────────────────────
     "soc 2": ("compliance", "tool"),
     "soc2": ("compliance", "tool"),
@@ -362,6 +436,29 @@ SYNONYMS: dict[str, str] = {
     "pci-dss": "pci dss",
     "pentesting": "penetration testing",
     "security questionnaires": "security questionnaire",
+    "gobierno de ia": "ai governance",
+    "gobernanza de ia": "ai governance",
+    "modelo de gobernanza": "ai governance",
+    "marco de gobierno": "ai governance",
+    "ia responsable": "responsible ai",
+    "responsible ai": "ai governance",
+    "ia generativa": "generative ai",
+    "genai": "generative ai",
+    "llms": "llm",
+    "sistemas agenticos": "agentic systems",
+    "copilotos": "copilots",
+    "trazabilidad": "traceability",
+    "auditabilidad": "auditability",
+    "evidencia auditable": "auditability",
+    "riesgo tecnologico": "gestion de riesgos",
+    "iso/iec 42001": "iso 42001",
+    "internal control": "control interno",
+    "segregation of duties": "segregacion de funciones",
+    "risk matrix": "matriz de riesgo",
+    "regulated environments": "entornos regulados",
+    "financial services": "servicios financieros",
+    "regulatory compliance": "cumplimiento regulatorio",
+    "data privacy": "proteccion de datos",
 }
 
 
@@ -512,6 +609,25 @@ class JobSpec:
     secondary_domains: list[str] = field(default_factory=list)
     seniority_requested: list[str] = field(default_factory=list)
     admission: Optional["Admission"] = None
+    # WHERE the vacancy's weight actually sits. Distinct from `primary_family`,
+    # which is the professional base of the role. A DevSecOps engineer applying
+    # to an AI-governance post keeps the base and shifts the centre: the CV must
+    # foreground governance evidence without claiming a different profession.
+    center_of_gravity: dict = field(default_factory=dict)
+
+    def primary_domain(self) -> str:
+        return self.center_of_gravity.get("primary_domain", "")
+
+    def domain_rank(self, domain: str) -> float:
+        """1.0 primary, 0.7 secondary, 0.4 supporting, 0.1 otherwise."""
+        cog = self.center_of_gravity
+        if domain == cog.get("primary_domain"):
+            return 1.0
+        if domain in cog.get("secondary_domains", []):
+            return 0.7
+        if domain in cog.get("supporting_domains", []):
+            return 0.4
+        return 0.1
 
     # -- convenience views ---------------------------------------------------
     def musts(self) -> list[Requirement]:
@@ -564,6 +680,14 @@ _TITLE_BOILERPLATE = re.compile(
 # sentence. Capture the noun phrase ending in a role noun.
 _ROLE_NOUN = (r"engineer|developer|architect|consultant|specialist|analyst|"
               r"administrator|manager|lead|scientist|designer|technician")
+# Spanish postings often state the role as a mission line ("Tu misión:
+# Liderar el marco de gobierno de Inteligencia Artificial...") with no title
+# anywhere. Recognising the mission verb lets the report name the role instead
+# of quoting the company's marketing paragraph.
+_MISSION = re.compile(
+    r"(?:tu misi[oó]n|your mission|el rol|the role|objetivo del puesto)\s*[:\-]?\s*"
+    r"([A-ZÁÉÍÓÚÑ][^.\n]{10,110})", re.I)
+
 _LOOKING_FOR = re.compile(
     r"(?:looking for|hiring|seeking|in search of|buscamos|estamos buscando|"
     r"nos encontramos buscando)\s+(?:an?\s+|una?\s+)?"
@@ -599,6 +723,11 @@ def _extract_title(jd_text: str) -> tuple[str, str]:
         while len(words) > 2 and words[0][:1].islower():
             words.pop(0)
         raw = " ".join(words).strip()
+        return raw, clean_title(raw)
+
+    m = _MISSION.search("\n".join(lines[:40]))
+    if m:
+        raw = " ".join(m.group(1).split())
         return raw, clean_title(raw)
 
     for line in lines[:6]:
@@ -700,6 +829,7 @@ def parse_jd(jd_text: str) -> JobSpec:
 
     spec.requirements = sorted(acc.values(), key=lambda r: (-r.weight, r.term))
     classify_jd(jd_text, spec)
+    spec.center_of_gravity = compute_center_of_gravity(spec)
     spec.admission = classify_admission(jd_text, len(spec.requirements))
     return spec
 
@@ -841,3 +971,58 @@ def classify_jd(jd_text: str, spec: "JobSpec") -> None:
         if token in scope and level not in asked:
             asked.append(level)
     spec.seniority_requested = asked
+
+
+# --------------------------------------------------------------------------- #
+# CENTRE OF GRAVITY
+# --------------------------------------------------------------------------- #
+# Dimensions that describe a PROFESSION rather than a subject area. They can be
+# supporting evidence for any vacancy, so they never become the centre unless
+# nothing else does.
+_BASE_DIMENSIONS = frozenset({
+    "cicd", "containers", "iac", "cloud_platform", "os", "scripting",
+    "observability", "data", "other",
+})
+
+
+def compute_center_of_gravity(spec: "JobSpec") -> dict:
+    """Rank the JD's dimensions by the weight they actually carry.
+
+    Mass is (requirement weight x how often the JD says it), so a vacancy that
+    mentions governance in every bullet and AWS once lands on governance. The
+    professional-base dimensions are held back from the primary slot: a CV must
+    not decide it is an "AWS vacancy" because a governance role happens to run
+    on AWS.
+    """
+    mass: dict[str, float] = {}
+    for req in spec.requirements:
+        weight = req.weight * (1 + 0.4 * min(req.mentions, 6))
+        mass[req.dimension] = mass.get(req.dimension, 0.0) + weight
+    if not mass:
+        return {"primary_domain": "", "secondary_domains": [],
+                "supporting_domains": [], "mass": {}}
+
+    total = sum(mass.values()) or 1.0
+    shares = {d: round(m / total, 4) for d, m in mass.items()}
+    ordered = sorted(shares.items(), key=lambda kv: -kv[1])
+
+    subject = [d for d, _ in ordered if d not in _BASE_DIMENSIONS]
+    primary = subject[0] if subject else ordered[0][0]
+
+    secondary, supporting = [], []
+    for dim, share in ordered:
+        if dim == primary:
+            continue
+        if dim in _BASE_DIMENSIONS:
+            # Carries real weight (an Azure role really is about the cloud
+            # platform) → secondary. Merely present → supporting.
+            (secondary if share >= 0.10 else supporting).append(dim)
+        elif share >= 0.04:
+            secondary.append(dim)
+        else:
+            supporting.append(dim)
+
+    return {"primary_domain": primary,
+            "secondary_domains": secondary,
+            "supporting_domains": supporting,
+            "mass": shares}

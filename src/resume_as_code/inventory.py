@@ -33,7 +33,7 @@ CATEGORY_DIMENSION: dict[str, str] = {
     "reliability": "observability",
     "languages": "scripting",
     "data": "data",
-    "ai": "ai",
+    "ai": "ai_governance",
     "platform": "other",
     "integration": "other",
     "quality": "other",

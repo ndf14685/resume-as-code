@@ -205,9 +205,15 @@ def resolve_candidate_headline(*, spec, inventory, matrix, bundle=None,
     # 3) Specialization — steered by the JD, still gated on real evidence.
     claimable = matrix.claimable_skills() if matrix is not None else set()
     wanted = [primary, *secondary]
+    # Rank the candidate specializations by how central each is to THIS
+    # vacancy, not by the order they happen to be declared in.
+    ranked_specs = sorted(
+        SPECIALIZATIONS,
+        key=lambda s: (-spec.domain_rank(s[0]),
+                       wanted.index(s[0]) if s[0] in wanted else 99))
     phrases: list[str] = []
-    for key, phrase, needs in SPECIALIZATIONS:
-        if key not in wanted or phrase in phrases:
+    for key, phrase, needs in ranked_specs:
+        if (key not in wanted and spec.domain_rank(key) < 0.7) or phrase in phrases:
             continue
         proof = [s for s in needs if s in claimable]
         if not proof:

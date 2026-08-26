@@ -208,7 +208,8 @@ def cmd_generate(args) -> int:
             # parse error.
             quality = evaluate_quality(
                 artifacts["pdf"], jd_text=jd_text, bundle=bundle,
-                intent=intent, data_dir=args.data, matrix=pipe.matrix)
+                intent=intent, data_dir=args.data, matrix=pipe.matrix,
+                headline=pipe.resume.headline)
             ats_passed = quality.passed and pipe.passed
             ats_failures = list(dict.fromkeys(quality.failures + pipe.failures))
         else:

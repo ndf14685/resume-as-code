@@ -82,6 +82,10 @@ class ComposedPlan:
     # How the headline was decided, for the debug artifact. Empty on the legacy
     # template path, which does not resolve a candidate headline.
     headline_audit: dict = field(default_factory=dict)
+    # Skills scored into the OMIT tier: true, but not worth CV space for this
+    # vacancy. Empty on the legacy template path.
+    dropped_skills: set = field(default_factory=set)
+    skill_ranking: dict = field(default_factory=dict)
 
 
 def _clean_title(raw: str) -> str:
