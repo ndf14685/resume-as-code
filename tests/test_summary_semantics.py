@@ -13,6 +13,7 @@ Two failure modes, neither of which a factcheck on individual claims catches:
 """
 from __future__ import annotations
 
+import pathlib
 import re
 
 import pytest
@@ -66,11 +67,33 @@ def test_no_aggregation_count_anywhere_in_the_cv(result):
         AGGREGATION_RE.search(rendered).group(0)
 
 
+def test_gap_labels_carry_no_aggregation(result):
+    """What this repo hands the delivery layer must already be clean.
+
+    The caption is assembled downstream, but it is assembled FROM these labels,
+    so the ban starts here.
+    """
+    for label in result.gap_labels(limit=12):
+        assert not AGGREGATION_RE.search(label), label
+        assert label.strip() == label and label, repr(label)
+
+
 def test_no_aggregation_count_in_the_delivery_caption():
-    """The Telegram caption is prose the user reads next to the document."""
+    """The Telegram caption is prose the user reads next to the document.
+
+    The adapter lives in the idp-platform repo, so this asserts the real
+    integration where both are checked out and skips where only this repo is —
+    a cross-repo import must not decide whether this suite is green.
+    """
     import sys
-    sys.path.insert(0, "/home/ndf/workspace/idp-platform")
-    from scripts.nexusos.adapters.resume_generate_adapter import _delivery_caption
+    adapter_root = "/home/ndf/workspace/idp-platform"
+    if not pathlib.Path(adapter_root).is_dir():
+        pytest.skip("idp-platform not checked out alongside this repo")
+    sys.path.insert(0, adapter_root)
+    try:
+        from scripts.nexusos.adapters.resume_generate_adapter import _delivery_caption
+    except ImportError as exc:
+        pytest.skip(f"delivery adapter unavailable: {exc}")
     caption = _delivery_caption({
         "candidateHeadline": "Senior DevOps / DevSecOps Engineer",
         "targetRole": "AI Governance Lead",
